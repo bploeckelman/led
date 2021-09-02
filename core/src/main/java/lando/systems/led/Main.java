@@ -113,6 +113,10 @@ public class Main extends ApplicationAdapter {
             ImGui.Text("Grid Size");
             ImGui.InputInt("", grid, 4, 16);
             ImGui.SliderInt("", grid, 4, 256);
+
+            ImGui.Separator();
+
+            ImGui.Text(String.format("zoom: %.2f", camera.zoom));
         }
         ImGui.End();
         ImGui.Render();

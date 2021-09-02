@@ -63,14 +63,16 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
         shift_down = (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)
                    || Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT));
 
-        camera.position.x = MathUtils.lerp(camera.position.x, target_pos.x, pan_speed * dt);
-        camera.position.y = MathUtils.lerp(camera.position.y, target_pos.y, pan_speed * dt);
-
         target_zoom = MathUtils.clamp(target_zoom, zoom_min, zoom_max);
         camera.zoom = Interpolation.exp10Out.apply(camera.zoom, target_zoom, zoom_speed * dt);
         effective_viewport.set(
                 camera.viewportWidth  * camera.zoom,
                 camera.viewportHeight * camera.zoom);
+
+//        camera.position.x = MathUtils.lerp(camera.position.x, target_pos.x, pan_speed * dt);
+//        camera.position.y = MathUtils.lerp(camera.position.y, target_pos.y, pan_speed * dt);
+        camera.position.x = Interpolation.exp5Out.apply(camera.position.x, target_pos.x, pan_speed * dt);
+        camera.position.y = Interpolation.exp5Out.apply(camera.position.y, target_pos.y, pan_speed * dt);
 
         camera.position.x = MathUtils.clamp(camera.position.x, camera_min_x + effective_viewport.x / 2f, camera_max_x - effective_viewport.y / 2f);
         camera.position.y = MathUtils.clamp(camera.position.y, camera_min_y + effective_viewport.x / 2f, camera_max_y - effective_viewport.y / 2f);
@@ -105,7 +107,10 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
 
     @Override
     public boolean pan(float x, float y, float deltaX, float deltaY) {
-        target_pos.set(camera.position.x - deltaX, camera.position.y + deltaY);
+        float scale = (camera.zoom <  0.6f) ? 0.3f : 1f;
+        float new_x = camera.position.x - (scale * deltaX);
+        float new_y = camera.position.y + (scale * deltaY);
+        target_pos.set(new_x, new_y);
         panning = true;
         return true;
     }
@@ -125,7 +130,8 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
 
     @Override
     public boolean scrolled(float amountX, float amountY) {
-        final float slow_factor = (shift_down ? 0.1f : 1f);
+        final boolean is_close = (camera.zoom >= 0.05f && camera.zoom <= 2f);
+        final float slow_factor = (is_close || shift_down ? 0.1f : 1f);
         target_zoom += Math.signum(amountY) * slow_factor;
         return true;
     }
