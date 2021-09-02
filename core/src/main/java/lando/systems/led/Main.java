@@ -34,6 +34,7 @@ public class Main extends ApplicationAdapter {
 
     OrthographicCamera camera;
     CameraInput camera_input;
+    WorldInput world_input;
 
     @Override
     public void create() {
@@ -60,11 +61,13 @@ public class Main extends ApplicationAdapter {
         camera = new OrthographicCamera();
 
         camera_input = new CameraInput(camera);
+        world_input = new WorldInput(camera);
         imgui_input = new ImGuiGdxInput();
         var input_mux = new InputMultiplexer(
                 imgui_input,
-                camera_input,
-                new GestureDetector(camera_input)
+                camera_input, // as InputProcessor
+                new GestureDetector(camera_input),
+                world_input
         );
         Gdx.input.setInputProcessor(input_mux);
     }
@@ -90,6 +93,7 @@ public class Main extends ApplicationAdapter {
         var dt = Gdx.graphics.getDeltaTime();
 
         camera_input.update(dt);
+        world_input.update(dt);
 
         imgui.update();
     }
@@ -116,6 +120,7 @@ public class Main extends ApplicationAdapter {
 
             ImGui.Separator();
 
+            ImGui.Text(String.format("mouse: (%.0f, %.0f)", world_input.mouse_pos.x, world_input.mouse_pos.y));
             ImGui.Text(String.format("zoom: %.2f", camera.zoom));
         }
         ImGui.End();
