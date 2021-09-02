@@ -159,6 +159,8 @@ public class Main extends ApplicationAdapter {
             drawer.line(-scale, 0, scale, 0, Color.FIREBRICK, 2);
             drawer.line(0, -scale, 0, scale, Color.FOREST, 2);
 
+            world.render(drawer);
+
             if (world_input.selected_level != null) {
                 // draw a highlight rect for the currently drawn 'level'
                 var level = world_input.selected_level;
