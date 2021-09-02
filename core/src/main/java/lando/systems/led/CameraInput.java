@@ -27,6 +27,7 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
     final Vector2 target_pos;
     float target_zoom;
     boolean shift_down;
+    boolean middle_mouse_down;
 
     public final Vector2 effective_viewport;
     public boolean panning;
@@ -39,6 +40,7 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
         this.effective_viewport = new Vector2();
         this.panning = false;
         this.shift_down = false;
+        this.middle_mouse_down = false;
         reset_camera();
     }
 
@@ -57,6 +59,7 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
 
         panning = false;
         shift_down = false;
+        middle_mouse_down = false;
     }
 
     public void update(float dt) {
@@ -69,8 +72,6 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
                 camera.viewportWidth  * camera.zoom,
                 camera.viewportHeight * camera.zoom);
 
-//        camera.position.x = MathUtils.lerp(camera.position.x, target_pos.x, pan_speed * dt);
-//        camera.position.y = MathUtils.lerp(camera.position.y, target_pos.y, pan_speed * dt);
         camera.position.x = Interpolation.exp5Out.apply(camera.position.x, target_pos.x, pan_speed * dt);
         camera.position.y = Interpolation.exp5Out.apply(camera.position.y, target_pos.y, pan_speed * dt);
 
@@ -85,9 +86,20 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
 
     @Override
     public boolean touchDown(float x, float y, int pointer, int button) {
+        if (button == Input.Buttons.MIDDLE) {
+            middle_mouse_down = true;
+        }
         touch_pos.set(x, y, 0);
         camera.unproject(touch_pos);
-        return true;
+        return false;
+    }
+
+    @Override
+    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        if (button == Input.Buttons.MIDDLE) {
+            middle_mouse_down = false;
+        }
+        return false;
     }
 
     @Override
@@ -107,12 +119,15 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
 
     @Override
     public boolean pan(float x, float y, float deltaX, float deltaY) {
-        float scale = (camera.zoom <  0.6f) ? 0.3f : 1f;
-        float new_x = camera.position.x - (scale * deltaX);
-        float new_y = camera.position.y + (scale * deltaY);
-        target_pos.set(new_x, new_y);
-        panning = true;
-        return true;
+        if (middle_mouse_down) {
+            float scale = (camera.zoom < 0.6f) ? 0.3f : 1f;
+            float new_x = camera.position.x - (scale * deltaX);
+            float new_y = camera.position.y + (scale * deltaY);
+            target_pos.set(new_x, new_y);
+            panning = true;
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -145,15 +160,5 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
     public void pinchStop() {
 
     }
-
-//    @Override
-//    public boolean pinch(Vector2 initialPointer1, Vector2 initialPointer2, Vector2 pointer1, Vector2 pointer2) {
-//        return super.pinch(initialPointer1, initialPointer2, pointer1, pointer2);
-//    }
-//
-//    @Override
-//    public void pinchStop() {
-//        super.pinchStop();
-//    }
 
 }
