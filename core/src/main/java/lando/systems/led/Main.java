@@ -4,6 +4,7 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -13,6 +14,7 @@ import com.github.xpenatan.imgui.ImGui;
 import com.github.xpenatan.imgui.ImGuiExt;
 import com.github.xpenatan.imgui.ImGuiInt;
 import com.github.xpenatan.imgui.enums.ImGuiConfigFlags;
+import com.github.xpenatan.imgui.enums.ImGuiInputTextFlags;
 import com.github.xpenatan.imgui.gdx.ImGuiGdxImpl;
 import com.github.xpenatan.imgui.gdx.ImGuiGdxInput;
 import space.earlygrey.shapedrawer.ShapeDrawer;
@@ -28,6 +30,8 @@ public class Main extends ApplicationAdapter {
 
     final int default_grid = 16;
     ImGuiInt grid;
+
+    OrthographicCamera camera;
 
     @Override
     public void create() {
@@ -51,7 +55,8 @@ public class Main extends ApplicationAdapter {
         imgui = new ImGuiGdxImpl();
         grid = new ImGuiInt(default_grid);
 
-        // TODO: add ui controls
+        camera = new OrthographicCamera();
+        camera.setToOrtho(false, Config.viewport_width, Config.viewport_height);
 
         imgui_input = new ImGuiGdxInput();
         Gdx.input.setInputProcessor(imgui_input);
@@ -76,6 +81,7 @@ public class Main extends ApplicationAdapter {
         }
 
         imgui.update();
+        camera.update();
     }
 
     @Override
@@ -87,13 +93,18 @@ public class Main extends ApplicationAdapter {
         // build imgui frame
         ImGui.Begin("Level Editor (LED)");
         {
-            ImGui.Text("beep");
-            ImGui.SliderInt("grid", grid, 4, 256);
+            ImGui.Text("Grid Size");
+            ImGui.InputInt("", grid, 4, 16);
+            ImGui.SliderInt("", grid, 4, 256);
+            if (ImGui.Button("Reset", 115, 20)) {
+                grid.setValue(default_grid);
+            }
         }
         ImGui.End();
         ImGui.Render();
 
         // draw scene
+        batch.setProjectionMatrix(camera.combined);
         batch.begin();
         {
             var steps = 300;
