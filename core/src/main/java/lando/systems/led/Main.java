@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.input.GestureDetector;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.github.xpenatan.imgui.ImGui;
 import com.github.xpenatan.imgui.ImGuiExt;
@@ -93,6 +94,9 @@ public class Main extends ApplicationAdapter {
 
         var dt = Gdx.graphics.getDeltaTime();
 
+        camera_input.pan_enabled = !world_input.show_new_level_button;
+        camera_input.zoom_enabled = !world_input.show_new_level_button;
+
         camera_input.update(dt);
         world_input.update(dt);
 
@@ -104,27 +108,13 @@ public class Main extends ApplicationAdapter {
         update();
 
         ScreenUtils.clear(0.2f, 0.2f, 0.2f, 1f);
+        batch.setProjectionMatrix(camera.combined);
 
         // build imgui frame
-        ImGui.Begin("Level Editor (LED)");
         {
-            if (ImGui.Button("Reset", 100, 25)) {
-                world.grid.setValue(World.default_grid);
-                camera_input.reset_camera();
-            }
-
-            ImGui.Separator();
-
-            ImGui.Text("Grid Size");
-            ImGui.InputInt("", world.grid, 4, 16);
-            ImGui.SliderInt("", world.grid, 4, 256);
-
-            ImGui.Separator();
-
-            ImGui.Text(String.format("mouse: (%.0f, %.0f)", world_input.mouse_pos.x, world_input.mouse_pos.y));
-            ImGui.Text(String.format("zoom: %.2f", camera.zoom));
+            build_imgui_sidebar();
+            world_input.build_imgui_data();
         }
-        ImGui.End();
         ImGui.Render();
 
         // draw scene
@@ -165,10 +155,10 @@ public class Main extends ApplicationAdapter {
                 // draw a highlight rect for the currently drawn 'level'
                 var level = world_input.selected_level;
                 drawer.filledRectangle(level.x, level.y, level.w, level.h, highlight);
-                drawer.setColor(Color.GOLD);
+                drawer.setColor(outline);
                 drawer.rectangle(level.x, level.y, level.w, level.h, 2f, JoinType.SMOOTH);
                 drawer.setColor(Color.WHITE);
-                drawer.filledCircle(level.x ,level.y, 3f, Color.LIME);
+                drawer.filledCircle(level.x ,level.y, 3f, corner);
             }
         }
         batch.end();
@@ -177,6 +167,39 @@ public class Main extends ApplicationAdapter {
         imgui.render(ImGui.GetDrawData());
     }
 
+    private Color corner = new Color(0x32cd32ff);
+    private Color corner_dim = new Color(0x129d1233);
+    private Color outline = new Color(0xffd700ff);
+    private Color outline_dim = new Color(0xaf770033);
     private Color highlight = new Color(0xdaa5203f);
+    private Color highlight_dim = new Color(0xca951033);
+
+    private void build_imgui_sidebar() {
+        float sidebar_w = 300;
+        float sidebar_h = Gdx.graphics.getHeight();
+        float titlebar_h = 40;
+        ImGui.SetNextWindowPos(0, 0);
+        ImGui.SetNextWindowContentSize(sidebar_w, sidebar_h - titlebar_h);
+        ImGui.SetNextWindowSizeConstraints(sidebar_w, sidebar_h, sidebar_w, sidebar_h);
+        ImGui.Begin("Level Editor");
+        {
+            ImGui.LabelText(" ", String.format(" pos: (%d, %d)", (int) world_input.mouse_world.x, (int) world_input.mouse_world.y));
+            ImGui.LabelText(" ", String.format("tile: (%d, %d)", (int) world_input.mouse_world.x / world.grid.getValue(), (int) world_input.mouse_world.y / world.grid.getValue()));
+            ImGui.LabelText(" ", String.format("zoom: %.2f", camera.zoom));
+
+            if (ImGui.Button("Reset", 100, 25)) {
+                world.grid.setValue(World.default_grid);
+                camera_input.reset_camera();
+            }
+
+            ImGui.Separator();
+
+            ImGui.Text("Grid Size");
+            ImGui.InputInt("", world.grid, 4, 16);
+            ImGui.SliderInt("", world.grid, 4, 256);
+
+        }
+        ImGui.End();
+    }
 
 }

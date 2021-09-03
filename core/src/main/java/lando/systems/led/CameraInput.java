@@ -20,7 +20,7 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
     static final float zoom_max =  5f;
     static final float pan_speed = 6f;
     static final float zoom_speed = 2f;
-    static final float default_zoom = 1f;
+    static final float default_zoom = 2f;
 
     final OrthographicCamera camera;
     final Vector3 touch_pos;
@@ -31,6 +31,8 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
 
     public final Vector2 effective_viewport;
     public boolean panning;
+    public boolean zoom_enabled;
+    public boolean pan_enabled;
 
     public CameraInput(OrthographicCamera camera) {
         this.camera = camera;
@@ -41,18 +43,21 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
         this.panning = false;
         this.shift_down = false;
         this.middle_mouse_down = false;
+        this.zoom_enabled = true;
+        this.pan_enabled = true;
         reset_camera();
     }
 
     public void reset_camera() {
         camera.zoom = default_zoom;
-        camera.setToOrtho(false, Config.viewport_width, Config.viewport_height);
-        camera.translate(-Config.viewport_width / 2f, -Config.viewport_height / 2f);
-        camera.update();
-
         effective_viewport.set(
-                camera.viewportWidth  * camera.zoom,
-                camera.viewportHeight * camera.zoom);
+                Config.viewport_width  * camera.zoom,
+                Config.viewport_height * camera.zoom);
+
+        var sidebar_offset = 50;
+        camera.setToOrtho(false, Config.viewport_width, Config.viewport_height);
+        camera.translate(-effective_viewport.x / 2f - sidebar_offset, -effective_viewport.y / 2f);
+        camera.update();
 
         target_zoom = camera.zoom;
         target_pos.set(camera.position.x, camera.position.y);
@@ -119,7 +124,7 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
 
     @Override
     public boolean pan(float x, float y, float deltaX, float deltaY) {
-        if (middle_mouse_down) {
+        if (pan_enabled && middle_mouse_down) {
             float scale = (camera.zoom < 0.6f) ? 0.3f : 1f;
             float new_x = camera.position.x - (scale * deltaX);
             float new_y = camera.position.y + (scale * deltaY);
@@ -138,16 +143,21 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
 
     @Override
     public boolean zoom(float initialDistance, float distance) {
-        final float slow_factor = (shift_down ? 0.1f : 1f);
-        target_zoom += Math.signum(initialDistance - distance) * slow_factor;
-        return true;
+        if (zoom_enabled) {
+            final float slow_factor = (shift_down ? 0.1f : 1f);
+            target_zoom += Math.signum(initialDistance - distance) * slow_factor;
+            return true;
+        }
+        return false;
     }
 
     @Override
     public boolean scrolled(float amountX, float amountY) {
-        final boolean is_close = (camera.zoom >= 0.05f && camera.zoom <= 2f);
-        final float slow_factor = (is_close || shift_down ? 0.1f : 1f);
-        target_zoom += Math.signum(amountY) * slow_factor;
+        if (zoom_enabled) {
+            final boolean is_close = (camera.zoom >= 0.05f && camera.zoom <= 2f);
+            final float slow_factor = (is_close || shift_down ? 0.1f : 1f);
+            target_zoom += Math.signum(amountY) * slow_factor;
+        }
         return true;
     }
 
