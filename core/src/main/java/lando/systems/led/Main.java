@@ -13,6 +13,7 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.input.GestureDetector;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.github.xpenatan.imgui.ImGui;
 import com.github.xpenatan.imgui.ImGuiExt;
@@ -44,6 +45,9 @@ public class Main extends ApplicationAdapter {
     public static BitmapFont font;
     public static GlyphLayout layout;
 
+    private Texture background;
+    private Matrix4 screen_matrix;
+
     @Override
     public void create() {
         batch = new SpriteBatch();
@@ -51,6 +55,9 @@ public class Main extends ApplicationAdapter {
 
         font = new BitmapFont();
         layout = new GlyphLayout();
+
+        background = new Texture(Gdx.files.internal("background.png"));
+        screen_matrix = new Matrix4().setToOrtho2D(0, 0, Config.viewport_width, Config.viewport_height);
 
         // build a temp 1 pixel texture for testing shapedrawer
         var pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
@@ -90,6 +97,7 @@ public class Main extends ApplicationAdapter {
         imgui.dispose();
         batch.dispose();
         pixel.dispose();
+        background.dispose();
     }
 
     @Override
@@ -127,28 +135,18 @@ public class Main extends ApplicationAdapter {
         }
         ImGui.Render();
 
+        // draw background
+        batch.setProjectionMatrix(screen_matrix);
+        batch.begin();
+        {
+            batch.draw(background, -Config.window_width / 2f, -Config.window_height / 2f, Config.window_width, Config.window_height);
+        }
+        batch.end();
+
         // draw scene
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         {
-            // grid parameters
-            var steps = 300;
-            var scale = 2000f;
-            var width = 1f;
-            var color = Color.DARK_GRAY;
-            int grid_size = world.grid.getValue();
-
-            // draw background grid
-            {
-                // TODO: clip to only draw range within current camera bounds
-                for (int y = -steps; y <= steps; y++) {
-                    for (int x = -steps; x <= steps; x++) {
-                        drawer.line(x * grid_size, -scale, x * grid_size, scale, color, width);
-                        drawer.line(-scale, y * grid_size, scale, y * grid_size, color, width);
-                    }
-                }
-            }
-
             // draw a dimming overlay
             if (camera_input.panning) {
                 batch.setColor(0f, 0f, 0f, 0.2f);
@@ -162,6 +160,7 @@ public class Main extends ApplicationAdapter {
 
             // draw coordinate axes
             {
+                var scale = 2000f;
                 drawer.line(-scale, 0, scale, 0, Color.FIREBRICK, 2);
                 drawer.line(0, -scale, 0, scale, Color.FOREST, 2);
             }
