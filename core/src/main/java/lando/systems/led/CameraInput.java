@@ -86,6 +86,12 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
         camera.update();
     }
 
+    public void center_on_level(Level level) {
+        // reverse the effective_viewport calculation where:
+        // desired_viewport = { level.pixel_bounds.w + 2 * margin * zoom, ... }
+        // solve for zoom in order to properly orient the camera
+    }
+
     // ------------------------------------------------------------------------
     // GestureListener implementation
 

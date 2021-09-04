@@ -11,14 +11,12 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.input.GestureDetector;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.github.xpenatan.imgui.ImGui;
 import com.github.xpenatan.imgui.ImGuiExt;
 import com.github.xpenatan.imgui.enums.ImGuiConfigFlags;
 import com.github.xpenatan.imgui.gdx.ImGuiGdxImpl;
 import com.github.xpenatan.imgui.gdx.ImGuiGdxInput;
-import space.earlygrey.shapedrawer.JoinType;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
 /* https://github.com/xpenatan/jDear-imgui/ */
@@ -121,22 +119,26 @@ public class Main extends ApplicationAdapter {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         {
-            // draw grid
+            // grid parameters
             var steps = 300;
             var scale = 2000f;
             var width = 1f;
             var color = Color.DARK_GRAY;
             int grid_size = world.grid.getValue();
-            // TODO: clip to only draw range within current camera bounds
-            for (int y = -steps; y <= steps; y++) {
-                for (int x = -steps; x <= steps; x++) {
-                    drawer.line(x * grid_size, -scale, x * grid_size, scale, color, width);
-                    drawer.line(-scale, y * grid_size, scale, y * grid_size, color, width);
+
+            // draw background grid
+            {
+                // TODO: clip to only draw range within current camera bounds
+                for (int y = -steps; y <= steps; y++) {
+                    for (int x = -steps; x <= steps; x++) {
+                        drawer.line(x * grid_size, -scale, x * grid_size, scale, color, width);
+                        drawer.line(-scale, y * grid_size, scale, y * grid_size, color, width);
+                    }
                 }
             }
 
+            // draw a dimming overlay
             if (camera_input.panning) {
-                // draw a dimming overlay
                 batch.setColor(0f, 0f, 0f, 0.2f);
                 batch.draw(pixel,
                         camera.position.x - camera_input.effective_viewport.x / 2f,
@@ -146,19 +148,15 @@ public class Main extends ApplicationAdapter {
                 batch.setColor(Color.WHITE);
             }
 
-            drawer.line(-scale, 0, scale, 0, Color.FIREBRICK, 2);
-            drawer.line(0, -scale, 0, scale, Color.FOREST, 2);
+            // draw coordinate axes
+            {
+                drawer.line(-scale, 0, scale, 0, Color.FIREBRICK, 2);
+                drawer.line(0, -scale, 0, scale, Color.FOREST, 2);
+            }
 
-            world.render(drawer);
-
-            if (world_input.selected_level != null) {
-                // draw a highlight rect for the currently drawn 'level'
-                var level = world_input.selected_level;
-                drawer.filledRectangle(level.x, level.y, level.w, level.h, highlight);
-                drawer.setColor(outline);
-                drawer.rectangle(level.x, level.y, level.w, level.h, 2f, JoinType.SMOOTH);
-                drawer.setColor(Color.WHITE);
-                drawer.filledCircle(level.x ,level.y, 3f, corner);
+            // draw the world
+            {
+                world.render(drawer);
             }
         }
         batch.end();
@@ -166,13 +164,6 @@ public class Main extends ApplicationAdapter {
         // draw ui
         imgui.render(ImGui.GetDrawData());
     }
-
-    private Color corner = new Color(0x32cd32ff);
-    private Color corner_dim = new Color(0x129d1233);
-    private Color outline = new Color(0xffd700ff);
-    private Color outline_dim = new Color(0xaf770033);
-    private Color highlight = new Color(0xdaa5203f);
-    private Color highlight_dim = new Color(0xca951033);
 
     private void build_imgui_sidebar() {
         float sidebar_w = 300;
@@ -188,7 +179,7 @@ public class Main extends ApplicationAdapter {
             ImGui.LabelText(" ", String.format("zoom: %.2f", camera.zoom));
 
             if (ImGui.Button("Reset", 100, 25)) {
-                world.grid.setValue(World.default_grid);
+                world.grid.setValue(Level.default_grid_size);
                 camera_input.reset_camera();
             }
 
@@ -197,7 +188,6 @@ public class Main extends ApplicationAdapter {
             ImGui.Text("Grid Size");
             ImGui.InputInt("", world.grid, 4, 16);
             ImGui.SliderInt("", world.grid, 4, 256);
-
         }
         ImGui.End();
     }

@@ -3,7 +3,6 @@ package lando.systems.led;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.utils.Array;
 import com.github.xpenatan.imgui.ImGuiInt;
-import lando.systems.led.utils.RectI;
 import space.earlygrey.shapedrawer.JoinType;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
@@ -16,31 +15,36 @@ public class World {
     private final Color highlight = new Color(0xdaa5203f);
     private final Color highlight_dim = new Color(0xca951033);
 
-    public static final int default_grid = 16;
     public final ImGuiInt grid;
 
-    final Array<RectI> levels;
+    final Array<Level> levels;
+    Level active_level;
 
     public World() {
         this.levels = new Array<>();
-        this.grid = new ImGuiInt(default_grid);
+        this.grid = new ImGuiInt(Level.default_grid_size);
+        this.active_level = null;
     }
 
     public void update(float dt) {
 
     }
 
-    public void add_level(RectI level) {
-        levels.add(RectI.of(level));
+    public void add_level(Level new_level) {
+        levels.add(new_level);
+        active_level = new_level;
     }
 
     public void render(ShapeDrawer drawer) {
+        // draw outlines for the existing levels in the world
         for (var level : levels) {
-            drawer.filledRectangle(level.x, level.y, level.w, level.h, highlight_dim);
-            drawer.setColor(outline_dim);
-            drawer.rectangle(level.x, level.y, level.w, level.h, 2f, JoinType.SMOOTH);
+            var is_active = (level == active_level);
+
+            drawer.filledRectangle(level.pixel_bounds.x, level.pixel_bounds.y, level.pixel_bounds.w, level.pixel_bounds.h, is_active ? highlight : highlight_dim);
+            drawer.setColor(is_active ? outline : outline_dim);
+            drawer.rectangle(level.pixel_bounds.x, level.pixel_bounds.y, level.pixel_bounds.w, level.pixel_bounds.h, 2f, JoinType.SMOOTH);
             drawer.setColor(Color.WHITE);
-            drawer.filledCircle(level.x ,level.y, 3f, corner_dim);
+            drawer.filledCircle(level.pixel_bounds.x ,level.pixel_bounds.y, 3f, is_active ? corner : corner_dim);
         }
     }
 
