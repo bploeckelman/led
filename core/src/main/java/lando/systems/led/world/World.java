@@ -71,4 +71,16 @@ public class World {
         return null;
     }
 
+    public void delete_active_world() {
+        if (active_level != null) {
+            levels.removeValue(active_level, true);
+            active_level = null;
+
+            var next_active_level = levels.random();
+            if (next_active_level != null) {
+                active_level = next_active_level;
+            }
+        }
+    }
+
 }

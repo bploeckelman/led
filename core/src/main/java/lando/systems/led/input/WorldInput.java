@@ -137,4 +137,15 @@ public class WorldInput extends InputAdapter {
         return false;
     }
 
+    @Override
+    public boolean keyDown(int keycode) {
+        if (keycode == Input.Keys.DEL
+         || keycode == Input.Keys.FORWARD_DEL) {
+            // TODO: prompt before deleting
+            world.delete_active_world();
+            return true;
+        }
+        return false;
+    }
+
 }
