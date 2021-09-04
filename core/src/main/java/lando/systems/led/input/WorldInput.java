@@ -27,7 +27,7 @@ public class WorldInput extends InputAdapter {
     // exposed because it impacts camera input, handled in Main
     public boolean show_new_level_button;
 
-    private Point new_level_pos;
+    public Point new_level_pos;
 
     static class MouseButtons {
         boolean left_mouse_down;

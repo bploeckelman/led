@@ -161,6 +161,12 @@ public class Main extends ApplicationAdapter {
             // draw the world
             {
                 world.render(drawer);
+
+                if (world_input.show_new_level_button) {
+                    var radius = 4;
+                    var pos = world_input.new_level_pos;
+                    drawer.filledCircle(pos.x, pos.y, radius, Color.LIME);
+                }
             }
         }
         batch.end();
