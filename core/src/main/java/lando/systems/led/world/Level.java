@@ -183,10 +183,12 @@ public class Level {
         // NOTE: the radii should all be the same,
         //  they've been updated relative to camera zoom level
         var offset = drag_handles.get(left).circle.radius;
+
         drag_handles.get(left)  .circle.setPosition(pixel_bounds.x - offset,                  pixel_bounds.y + pixel_bounds.h / 2f);
         drag_handles.get(right) .circle.setPosition(pixel_bounds.x + offset + pixel_bounds.w, pixel_bounds.y + pixel_bounds.h / 2f);
         drag_handles.get(up)    .circle.setPosition(pixel_bounds.x + pixel_bounds.w / 2f, pixel_bounds.y + pixel_bounds.h + offset);
         drag_handles.get(down)  .circle.setPosition(pixel_bounds.x + pixel_bounds.w / 2f, pixel_bounds.y - offset);
+
         drag_handles.get(center).circle.set(
                 pixel_bounds.x + pixel_bounds.w / 2f,
                 pixel_bounds.y + pixel_bounds.h / 2f,

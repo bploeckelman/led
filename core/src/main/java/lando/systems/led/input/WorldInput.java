@@ -56,8 +56,10 @@ public class WorldInput extends InputAdapter {
             // update handles
             for (var handle : active_level.drag_handles.values()) {
                 // update hover state for rendering
-                handle.hovered = handle.circle.contains(Inputs.mouse_world.x, Inputs.mouse_world.y)
-                              || handle == active_handle;
+                var contains_mouse = (handle.dir == center)
+                        ? active_level.pixel_bounds.contains(Inputs.mouse_world.x, Inputs.mouse_world.y)
+                        : handle.circle.contains(Inputs.mouse_world.x, Inputs.mouse_world.y);
+                handle.hovered = contains_mouse || handle == active_handle;
                 // update effective radius to maintain consistent size on screen
                 handle.circle.radius = handle.world_radius * camera.zoom;
             }
@@ -66,10 +68,16 @@ public class WorldInput extends InputAdapter {
             if (!show_new_level_button) {
                 if (mouse_buttons.left_mouse_down && active_handle != null) {
                     var mouse = Inputs.mouse_world;
+
                     if (active_handle.dir == left)   active_level.set_left_bound(mouse.x);
                     if (active_handle.dir == right)  active_level.set_right_bound(mouse.x);
                     if (active_handle.dir == up)     active_level.set_up_bound(mouse.y);
                     if (active_handle.dir == down)   active_level.set_down_bound(mouse.y);
+
+                    // TODO: don't use mouse.x/y directly as it's offset from the existing center by some amount
+                    //   because of this, the level 'jumps' a bit when it's first made active in order to make
+                    //   the level center be where the user just clicked.
+                    //   instead account for that and offset the move based on the relative position of the mouse from the level center
                     if (active_handle.dir == center) active_level.set_center_bound(
                             mouse.x - active_level.pixel_bounds.w / 2f,
                             mouse.y - active_level.pixel_bounds.h / 2f);
@@ -147,7 +155,10 @@ public class WorldInput extends InputAdapter {
                 if (active_level != null) {
                     // check for drag handle touch
                     for (var handle : active_level.drag_handles.values()) {
-                        if (handle.circle.contains(touch_world.x, touch_world.y)) {
+                        var contains_touch = (handle.dir == center)
+                                ? active_level.pixel_bounds.contains(touch_world.x, touch_world.y)
+                                : handle.circle.contains(touch_world.x, touch_world.y);
+                        if (contains_touch) {
                             active_handle = handle;
                             touched_handle = true;
                             break;
