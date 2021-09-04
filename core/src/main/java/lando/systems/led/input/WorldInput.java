@@ -20,13 +20,9 @@ public class WorldInput extends InputAdapter {
     final MouseButtons mouse_buttons;
     final World world;
 
-    // TODO: put in a global input class?
+    // TODO: put in a global input class or have a separate one per *Input class?
     final Vector3 touch_screen;
     final Vector3 touch_world;
-
-    // TODO: temporarily exposed until moved to a global input class
-    public final Vector3 mouse_screen;
-    public final Vector3 mouse_world;
 
     private Level.DragHandle active_handle;
 
@@ -46,18 +42,12 @@ public class WorldInput extends InputAdapter {
         this.camera = camera;
         this.touch_screen = new Vector3();
         this.touch_world = new Vector3();
-        this.mouse_screen = new Vector3();
-        this.mouse_world = new Vector3();
         this.mouse_buttons = new MouseButtons();
         this.active_handle = null;
         this.show_new_level_button = false;
     }
 
     public void update(float dt) {
-        mouse_screen.set(Gdx.input.getX(), Gdx.input.getY(), 0);
-        mouse_world.set(mouse_screen);
-        camera.unproject(mouse_world);
-
         var active_level = world.get_active_level();
         if (active_level != null) {
             // scale the level's fonts
@@ -66,7 +56,7 @@ public class WorldInput extends InputAdapter {
             // update handles
             for (var handle : active_level.drag_handles.values()) {
                 // update hover state for rendering
-                handle.hovered = handle.circle.contains(mouse_world.x, mouse_world.y)
+                handle.hovered = handle.circle.contains(Inputs.mouse_world.x, Inputs.mouse_world.y)
                               || handle == active_handle;
                 // update effective radius to maintain consistent size on screen
                 handle.circle.radius = handle.world_radius * camera.zoom;
@@ -75,13 +65,14 @@ public class WorldInput extends InputAdapter {
 
             if (!show_new_level_button) {
                 if (mouse_buttons.left_mouse_down && active_handle != null) {
-                    if (active_handle.dir == left)   active_level.set_left_bound(mouse_world.x);
-                    if (active_handle.dir == right)  active_level.set_right_bound(mouse_world.x);
-                    if (active_handle.dir == up)     active_level.set_up_bound(mouse_world.y);
-                    if (active_handle.dir == down)   active_level.set_down_bound(mouse_world.y);
+                    var mouse = Inputs.mouse_world;
+                    if (active_handle.dir == left)   active_level.set_left_bound(mouse.x);
+                    if (active_handle.dir == right)  active_level.set_right_bound(mouse.x);
+                    if (active_handle.dir == up)     active_level.set_up_bound(mouse.y);
+                    if (active_handle.dir == down)   active_level.set_down_bound(mouse.y);
                     if (active_handle.dir == center) active_level.set_center_bound(
-                            mouse_world.x - active_level.pixel_bounds.w / 2f,
-                            mouse_world.y - active_level.pixel_bounds.h / 2f);
+                            mouse.x - active_level.pixel_bounds.w / 2f,
+                            mouse.y - active_level.pixel_bounds.h / 2f);
                 }
             }
         }

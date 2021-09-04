@@ -8,8 +8,6 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.input.GestureDetector;
@@ -21,6 +19,7 @@ import com.github.xpenatan.imgui.enums.ImGuiConfigFlags;
 import com.github.xpenatan.imgui.gdx.ImGuiGdxImpl;
 import com.github.xpenatan.imgui.gdx.ImGuiGdxInput;
 import lando.systems.led.input.CameraInput;
+import lando.systems.led.input.Inputs;
 import lando.systems.led.input.WorldInput;
 import lando.systems.led.world.Level;
 import lando.systems.led.world.World;
@@ -42,9 +41,6 @@ public class Main extends ApplicationAdapter {
     World world;
     WorldInput world_input;
 
-    public static BitmapFont font;
-    public static GlyphLayout layout;
-
     private Texture background;
     private Matrix4 screen_matrix;
 
@@ -52,9 +48,6 @@ public class Main extends ApplicationAdapter {
     public void create() {
         batch = new SpriteBatch();
         drawer = new ShapeDrawer(batch);
-
-        font = new BitmapFont();
-        layout = new GlyphLayout();
 
         background = new Texture(Gdx.files.internal("background.png"));
         screen_matrix = new Matrix4().setToOrtho2D(0, 0, Config.viewport_width, Config.viewport_height);
@@ -81,6 +74,7 @@ public class Main extends ApplicationAdapter {
         camera_input = new CameraInput(camera);
         world_input = new WorldInput(world, camera);
         imgui_input = new ImGuiGdxInput();
+        Inputs.init(world_input, camera_input);
 
         var input_mux = new InputMultiplexer(
                 imgui_input,
@@ -109,6 +103,8 @@ public class Main extends ApplicationAdapter {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             Gdx.app.exit();
         }
+
+        Inputs.update();
 
         var dt = Gdx.graphics.getDeltaTime();
 
@@ -191,8 +187,8 @@ public class Main extends ApplicationAdapter {
         ImGui.SetNextWindowSizeConstraints(sidebar_w, sidebar_h, sidebar_w, sidebar_h);
         ImGui.Begin("Level Editor");
         {
-            ImGui.LabelText(" ", String.format(" pos: (%d, %d)", (int) world_input.mouse_world.x, (int) world_input.mouse_world.y));
-            ImGui.LabelText(" ", String.format("tile: (%d, %d)", (int) world_input.mouse_world.x / world.grid.getValue(), (int) world_input.mouse_world.y / world.grid.getValue()));
+            ImGui.LabelText(" ", String.format(" pos: (%d, %d)", (int) Inputs.mouse_world.x, (int) Inputs.mouse_world.y));
+            ImGui.LabelText(" ", String.format("tile: (%d, %d)", (int) Inputs.mouse_world.x / world.grid.getValue(), (int) Inputs.mouse_world.y / world.grid.getValue()));
             ImGui.LabelText(" ", String.format("zoom: %.2f", camera.zoom));
 
             if (ImGui.Button("Reset", 100, 25)) {
