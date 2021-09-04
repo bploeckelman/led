@@ -1,4 +1,4 @@
-package lando.systems.led;
+package lando.systems.led.world;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.utils.Array;

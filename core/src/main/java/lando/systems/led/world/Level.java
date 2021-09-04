@@ -1,4 +1,4 @@
-package lando.systems.led;
+package lando.systems.led.world;
 
 import lando.systems.led.utils.Point;
 import lando.systems.led.utils.RectI;

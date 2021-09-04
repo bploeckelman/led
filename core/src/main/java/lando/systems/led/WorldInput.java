@@ -7,6 +7,8 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector3;
 import com.github.xpenatan.imgui.ImGui;
 import lando.systems.led.utils.Point;
+import lando.systems.led.world.Level;
+import lando.systems.led.world.World;
 
 public class WorldInput extends InputAdapter {
 
@@ -108,7 +110,7 @@ public class WorldInput extends InputAdapter {
         }
 
         if (button == Input.Buttons.LEFT) {
-            // ...
+            hide_new_level_button();
         }
 
         return false;
