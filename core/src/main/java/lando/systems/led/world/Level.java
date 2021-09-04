@@ -25,7 +25,7 @@ import static lando.systems.led.world.Level.DragHandle.Dir.*;
 
 public class Level {
 
-    public static class DragHandle {
+    public class DragHandle {
         public enum Dir { left, right, up, down, center }
 
         public final Dir dir;
@@ -45,7 +45,16 @@ public class Level {
 
         public void render(ShapeDrawer drawer) {
             drawer.setColor(hovered ? color : color_dim);
-            drawer.filledCircle(circle.x,  circle.y, circle.radius);
+            if (dir == center) {
+                float w = Level.this.pixel_bounds.w;
+                float h = Level.this.pixel_bounds.h;
+                drawer.filledRectangle(
+                        circle.x - w / 2,
+                        circle.y - h / 2,
+                        w, h);
+            } else {
+                drawer.filledCircle(circle.x,  circle.y, circle.radius);
+            }
             drawer.setColor(Color.WHITE);
         }
     }
