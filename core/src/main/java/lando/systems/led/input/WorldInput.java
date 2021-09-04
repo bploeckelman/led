@@ -61,7 +61,7 @@ public class WorldInput extends InputAdapter {
         var active_level = world.get_active_level();
         if (active_level != null) {
             // scale the level's fonts
-            Level.font.getData().setScale(camera.zoom);
+            Level.font.getData().setScale(camera.zoom * 0.5f);
 
             // update handles
             for (var handle : active_level.drag_handles.values()) {

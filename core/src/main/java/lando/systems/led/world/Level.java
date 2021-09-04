@@ -1,9 +1,11 @@
 package lando.systems.led.world;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
@@ -17,8 +19,8 @@ import space.earlygrey.shapedrawer.ShapeDrawer;
 import static lando.systems.led.world.Level.DragHandle.Dir.*;
 
 // TODO:
-//  - add: optional layers (tile, entity, ???), maintains their own grid size
 //  - fix: reorient handles if a resize inverts the bounds  (ie. right edge dragged past left edge, etc..)
+//  - add: optional layers (tile, entity, ???), maintains their own grid size
 
 public class Level {
 
@@ -47,7 +49,8 @@ public class Level {
         }
     }
 
-    public static final BitmapFont font = new BitmapFont();
+    public static BitmapFont font = null;
+
     public static final GlyphLayout layout = new GlyphLayout();
     public static final int default_grid_size = 16;
     public static final int default_handle_radius = 5;
@@ -74,6 +77,23 @@ public class Level {
         this.drag_handles.put(up,     new DragHandle(up));
         this.drag_handles.put(down,   new DragHandle(down));
         this.drag_handles.put(center, new DragHandle(center));
+
+        if (Level.font == null) {
+            var fontFile = Gdx.files.internal("dogicapixel.ttf");
+            var generator = new FreeTypeFontGenerator(fontFile);
+            var parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+            parameter.size = 16;
+            parameter.mono = true;
+            parameter.color = Color.DARK_GRAY;
+            parameter.borderColor = new Color(0.1f, 0.1f, 0.1f, 1f);
+            parameter.shadowColor = Color.BLACK;
+            parameter.borderWidth = 1;
+            parameter.shadowOffsetX = 1;
+            parameter.shadowOffsetY = 1;
+            Level.font = generator.generateFont(parameter);
+            generator.dispose();
+        }
+
         update_handles();
     }
 
@@ -101,7 +121,7 @@ public class Level {
             {
                 layout.setText(font, String.format("%d px", pixel_bounds.h), Color.WHITE, pixel_bounds.h, Align.center, false);
 
-                var x = pixel_bounds.x - layout.width - 10;
+                var x = pixel_bounds.x - layout.height - 30;
                 var y = pixel_bounds.y;
                 sideways_text_transform.idt()
                         .rotate(Vector3.Z, 90f)
