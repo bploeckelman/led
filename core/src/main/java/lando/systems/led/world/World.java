@@ -1,5 +1,6 @@
 package lando.systems.led.world;
 
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
 import com.github.xpenatan.imgui.ImGuiInt;
 import space.earlygrey.shapedrawer.ShapeDrawer;
@@ -26,10 +27,10 @@ public class World {
         active_level = new_level;
     }
 
-    public void render(ShapeDrawer drawer) {
+    public void render(ShapeDrawer drawer, SpriteBatch batch) {
         for (var level : levels) {
             var is_active = (level == active_level);
-            level.render(drawer, is_active);
+            level.render(drawer, batch, is_active);
         }
     }
 

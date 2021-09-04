@@ -1,8 +1,13 @@
 package lando.systems.led.world;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.ObjectMap;
+import lando.systems.led.Main;
 import lando.systems.led.utils.Point;
 import lando.systems.led.utils.RectI;
 import space.earlygrey.shapedrawer.JoinType;
@@ -56,6 +61,7 @@ public class Level {
     private static final Color handle_dim    = new Color(150 / 255f, 150 / 255f, 150 / 255f, 0.33f);
 
     RectI pixel_bounds = RectI.zero();
+    Matrix4 sideways_text_transform = new Matrix4();
 
     public final ObjectMap<DragHandle.Dir, DragHandle> drag_handles;
 
@@ -69,7 +75,7 @@ public class Level {
         update_handles();
     }
 
-    public void render(ShapeDrawer drawer, boolean is_active) {
+    public void render(ShapeDrawer drawer, SpriteBatch batch, boolean is_active) {
         // interior
         drawer.filledRectangle(pixel_bounds.x, pixel_bounds.y, pixel_bounds.w, pixel_bounds.h, is_active ? highlight : highlight_dim);
 
@@ -78,11 +84,38 @@ public class Level {
         drawer.rectangle(pixel_bounds.x, pixel_bounds.y, pixel_bounds.w, pixel_bounds.h, 2f, JoinType.SMOOTH);
         drawer.setColor(Color.WHITE);
 
-        // handles
         if (is_active) {
+            // handles
             for (var handle : drag_handles.values()) {
                 handle.render(drawer);
             }
+
+            // sizes
+            Main.layout.setText(Main.font, String.format("%d px", pixel_bounds.w), Color.WHITE, pixel_bounds.w, Align.center, false);
+            Main.font.draw(batch, Main.layout, pixel_bounds.x, pixel_bounds.y - 30);
+
+            // T_T all this just for sideways text
+            batch.end();
+            {
+                Main.layout.setText(Main.font, String.format("%d px", pixel_bounds.h), Color.WHITE, pixel_bounds.h, Align.center, false);
+
+                var x = pixel_bounds.x - Main.layout.width - 10;
+                var y = pixel_bounds.y;
+                sideways_text_transform.idt()
+                        .rotate(Vector3.Z, 90f)
+                        .trn(x, y, 0);
+
+                var prev_matrix = batch.getTransformMatrix().cpy();
+                batch.setTransformMatrix(sideways_text_transform);
+                batch.begin();
+                {
+                    Main.font.draw(batch, Main.layout, 0, 0);
+                }
+                batch.end();
+                batch.setTransformMatrix(prev_matrix);
+            }
+            batch.begin();
+
         }
     }
 

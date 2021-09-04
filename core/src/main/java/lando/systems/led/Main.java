@@ -8,6 +8,8 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.input.GestureDetector;
@@ -39,10 +41,16 @@ public class Main extends ApplicationAdapter {
     World world;
     WorldInput world_input;
 
+    public static BitmapFont font;
+    public static GlyphLayout layout;
+
     @Override
     public void create() {
         batch = new SpriteBatch();
         drawer = new ShapeDrawer(batch);
+
+        font = new BitmapFont();
+        layout = new GlyphLayout();
 
         // build a temp 1 pixel texture for testing shapedrawer
         var pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
@@ -160,7 +168,7 @@ public class Main extends ApplicationAdapter {
 
             // draw the world
             {
-                world.render(drawer);
+                world.render(drawer, batch);
 
                 if (world_input.show_new_level_button) {
                     var radius = 4;
