@@ -70,10 +70,13 @@ public class WorldInput extends InputAdapter {
 
             if (!show_new_level_button) {
                 if (mouse_buttons.left_mouse_down && active_handle != null) {
-                    if (active_handle.dir == left)  active_level.set_left_bound(mouse_world.x);
-                    if (active_handle.dir == right) active_level.set_right_bound(mouse_world.x);
-                    if (active_handle.dir == up)    active_level.set_up_bound(mouse_world.y);
-                    if (active_handle.dir == down)  active_level.set_down_bound(mouse_world.y);
+                    if (active_handle.dir == left)   active_level.set_left_bound(mouse_world.x);
+                    if (active_handle.dir == right)  active_level.set_right_bound(mouse_world.x);
+                    if (active_handle.dir == up)     active_level.set_up_bound(mouse_world.y);
+                    if (active_handle.dir == down)   active_level.set_down_bound(mouse_world.y);
+                    if (active_handle.dir == center) active_level.set_center_bound(
+                            mouse_world.x - active_level.pixel_bounds.w / 2f,
+                            mouse_world.y - active_level.pixel_bounds.h / 2f);
                 }
             }
         }
