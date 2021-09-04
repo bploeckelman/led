@@ -50,6 +50,14 @@ public class WorldInput extends InputAdapter {
         mouse_screen.set(Gdx.input.getX(), Gdx.input.getY(), 0);
         mouse_world.set(mouse_screen);
         camera.unproject(mouse_world);
+
+        var active_level = world.get_active_level();
+        if (active_level != null) {
+            active_level.left_handle_active   = active_level.left_handle   .contains(mouse_world.x, mouse_world.y);
+            active_level.right_handle_active  = active_level.right_handle  .contains(mouse_world.x, mouse_world.y);
+            active_level.top_handle_active    = active_level.top_handle    .contains(mouse_world.x, mouse_world.y);
+            active_level.bottom_handle_active = active_level.bottom_handle .contains(mouse_world.x, mouse_world.y);
+        }
     }
 
     public void build_imgui_data() {
@@ -142,7 +150,7 @@ public class WorldInput extends InputAdapter {
         if (keycode == Input.Keys.DEL
          || keycode == Input.Keys.FORWARD_DEL) {
             // TODO: prompt before deleting
-            world.delete_active_world();
+            world.delete_active_level();
             return true;
         }
         return false;
