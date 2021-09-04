@@ -91,6 +91,8 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
 
     private final Vector3 screen_to_world = new Vector3();
     public void center_on_level(Level level) {
+        if (level == null) return;
+
         // calculate sidebar world width
         // see Main.build_imgui_sidebar(), should probably move gui stuff to it's own class and have this as a constant
         var sidebar_w = 300;

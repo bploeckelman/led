@@ -26,6 +26,7 @@ public class World {
     public void add_level(Level new_level) {
         levels.add(new_level);
         active_level = new_level;
+        Inputs.camera_input.center_on_level(active_level);
     }
 
     public void render(ShapeDrawer drawer, SpriteBatch batch) {
@@ -70,6 +71,7 @@ public class World {
             var next_active_level = levels.random();
             if (next_active_level != null) {
                 active_level = next_active_level;
+                Inputs.camera_input.center_on_level(active_level);
             }
         }
     }

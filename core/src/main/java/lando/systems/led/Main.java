@@ -77,10 +77,10 @@ public class Main extends ApplicationAdapter {
         Inputs.init(world_input, camera_input);
 
         var input_mux = new InputMultiplexer(
-                imgui_input,
-                camera_input, // as InputProcessor
-                new GestureDetector(camera_input),
-                world_input
+                  imgui_input
+                , camera_input // as InputProcessor
+                , new GestureDetector(camera_input)
+                , world_input
         );
         Gdx.input.setInputProcessor(input_mux);
     }
@@ -127,7 +127,7 @@ public class Main extends ApplicationAdapter {
         // build imgui frame
         {
             build_imgui_sidebar();
-            world_input.build_imgui_data();
+            world_input.update_gui();
         }
         ImGui.Render();
 

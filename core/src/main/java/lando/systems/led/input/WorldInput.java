@@ -1,13 +1,11 @@
 package lando.systems.led.input;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector3;
 import com.github.xpenatan.imgui.ImGui;
-import lando.systems.led.Main;
 import lando.systems.led.utils.Point;
 import lando.systems.led.world.Level;
 import lando.systems.led.world.World;
@@ -86,7 +84,7 @@ public class WorldInput extends InputAdapter {
         }
     }
 
-    public void build_imgui_data() {
+    public void update_gui() {
         if (show_new_level_button) {
             var button_w = 200;
             var button_h = 40;
@@ -98,6 +96,8 @@ public class WorldInput extends InputAdapter {
             {
                 if (ImGui.Button("Add Level", button_w, button_h))
                 {
+                    ImGui.SetWindowFocus(null);
+
                     // create a new level with default size at current location
                     var level = new Level(new_level_pos);
                     world.add_level(level);
@@ -203,6 +203,12 @@ public class WorldInput extends InputAdapter {
             // TODO: prompt before deleting
             world.delete_active_level();
             return true;
+        }
+
+        if (keycode == Keys.SPACE
+         || keycode == Keys.ENTER
+         || keycode == Keys.NUMPAD_ENTER) {
+            Inputs.camera_input.center_on_level(world.get_active_level());
         }
         return false;
     }
