@@ -143,21 +143,24 @@ public class WorldInput extends InputAdapter {
         else if (button == Buttons.LEFT) {
             var dismissed_button = hide_new_level_button();
             if (!dismissed_button) {
-                // check whether we clicked on an existing level
-                var clicked_level = world.pick_level_at((int) touch_world.x, (int) touch_world.y);
-                if (clicked_level != null && !world.is_active(clicked_level)) {
-                    world.make_active(clicked_level);
-                } else {
-                    // didn't click a different level, check whether we clicked a drag handle
-                    var active_level = world.get_active_level();
-                    if (active_level != null) {
-                        // handle.hovered should be current, but probably best to check the actual touch pos
-                        for (var handle : active_level.drag_handles.values()) {
-                            if (handle.circle.contains(touch_world.x, touch_world.y)) {
-                                active_handle = handle;
-                                break;
-                            }
+                var touched_handle = false;
+                var active_level = world.get_active_level();
+                if (active_level != null) {
+                    // check for drag handle touch
+                    for (var handle : active_level.drag_handles.values()) {
+                        if (handle.circle.contains(touch_world.x, touch_world.y)) {
+                            active_handle = handle;
+                            touched_handle = true;
+                            break;
                         }
+                    }
+                }
+
+                if (!touched_handle) {
+                    // check for touch on a different level
+                    var clicked_level = world.pick_level_at((int) touch_world.x, (int) touch_world.y);
+                    if (clicked_level != null && !world.is_active(clicked_level)) {
+                        world.make_active(clicked_level);
                     }
                 }
             }
