@@ -1,4 +1,4 @@
-package lando.systems.led;
+package lando.systems.led.input;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -9,6 +9,7 @@ import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import lando.systems.led.Config;
 import lando.systems.led.world.Level;
 
 public class CameraInput extends InputAdapter implements GestureDetector.GestureListener {

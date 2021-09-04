@@ -17,6 +17,8 @@ import com.github.xpenatan.imgui.ImGuiExt;
 import com.github.xpenatan.imgui.enums.ImGuiConfigFlags;
 import com.github.xpenatan.imgui.gdx.ImGuiGdxImpl;
 import com.github.xpenatan.imgui.gdx.ImGuiGdxInput;
+import lando.systems.led.input.CameraInput;
+import lando.systems.led.input.WorldInput;
 import lando.systems.led.world.Level;
 import lando.systems.led.world.World;
 import space.earlygrey.shapedrawer.ShapeDrawer;

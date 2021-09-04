@@ -1,4 +1,4 @@
-package lando.systems.led;
+package lando.systems.led.input;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -19,8 +19,10 @@ public class WorldInput extends InputAdapter {
     // TODO: put in a global input class?
     final Vector3 touch_screen;
     final Vector3 touch_world;
-    final Vector3 mouse_screen;
-    final Vector3 mouse_world;
+
+    // TODO: temporarily exposed until moved to a global input class
+    public final Vector3 mouse_screen;
+    public final Vector3 mouse_world;
 
     // exposed because it impacts camera input, handled in Main
     public boolean show_new_level_button;
@@ -75,7 +77,9 @@ public class WorldInput extends InputAdapter {
 
     private void hide_new_level_button() {
         show_new_level_button = false;
-        Point.pool.free(new_level_pos);
+        if (new_level_pos != null) {
+            Point.pool.free(new_level_pos);
+        }
     }
 
     // ------------------------------------------------------------------------
