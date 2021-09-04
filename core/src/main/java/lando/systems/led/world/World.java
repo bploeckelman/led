@@ -3,6 +3,7 @@ package lando.systems.led.world;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
 import com.github.xpenatan.imgui.ImGuiInt;
+import lando.systems.led.input.Inputs;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
 public class World {
@@ -45,6 +46,10 @@ public class World {
             } else {
                 add_level(level);
             }
+        }
+
+        if (active_level != null) {
+            Inputs.camera_input.center_on_level(active_level);
         }
     }
 

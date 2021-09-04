@@ -10,6 +10,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import lando.systems.led.Config;
+import lando.systems.led.utils.Point;
 import lando.systems.led.world.Level;
 
 public class CameraInput extends InputAdapter implements GestureDetector.GestureListener {
@@ -88,10 +89,37 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
         camera.update();
     }
 
+    private final Vector3 screen_to_world = new Vector3();
     public void center_on_level(Level level) {
-        // reverse the effective_viewport calculation where:
-        // desired_viewport = { level.pixel_bounds.w + 2 * margin * zoom, ... }
-        // solve for zoom in order to properly orient the camera
+        // calculate sidebar world width
+        // see Main.build_imgui_sidebar(), should probably move gui stuff to it's own class and have this as a constant
+        var sidebar_w = 300;
+        var sidebar_l = camera.unproject(screen_to_world.set(0, 0, 0)).x;
+        var sidebar_r = camera.unproject(screen_to_world.set(sidebar_w, 0, 0)).x;
+        var sidebar_screen_w = (int) (sidebar_r - sidebar_l);
+
+        var desired_viewport = Point.pool.obtain();
+        {
+            var margin = 50;
+            var bounds = level.pixel_bounds;
+
+            // calculate target viewport
+            desired_viewport.set(
+                    bounds.w + 2 * margin + sidebar_screen_w,
+                    bounds.h + 2 * margin);
+
+            // zoom
+            var effective_zoom_x = desired_viewport.x / camera.viewportWidth;
+            var effective_zoom_y = desired_viewport.y / camera.viewportHeight;
+            target_zoom = Math.max(effective_zoom_x, effective_zoom_y);
+
+            // position
+            var center_x = bounds.x + bounds.w / 2f;
+            var center_y = bounds.y + bounds.h / 2f;
+            var shift = sidebar_screen_w / 2f;
+            target_pos.set(center_x - shift, center_y);
+        }
+        Point.pool.free(desired_viewport);
     }
 
     // ------------------------------------------------------------------------
