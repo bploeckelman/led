@@ -19,7 +19,8 @@ import space.earlygrey.shapedrawer.ShapeDrawer;
 import static lando.systems.led.world.Level.DragHandle.Dir.*;
 
 // TODO:
-//  - fix: reorient handles if a resize inverts the bounds  (ie. right edge dragged past left edge, etc..)
+//  - fix: reorient bounds/handles if a resize inverts the bounds  (ie. right edge dragged past left edge, etc..)
+//         width and height should always be positive
 //  - add: optional layers (tile, entity, ???), maintains their own grid size
 
 public class Level {
@@ -84,7 +85,7 @@ public class Level {
             var parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
             parameter.size = 16;
             parameter.mono = true;
-            parameter.color = Color.DARK_GRAY;
+            parameter.color = Color.LIGHT_GRAY;
             parameter.borderColor = new Color(0.1f, 0.1f, 0.1f, 1f);
             parameter.shadowColor = Color.BLACK;
             parameter.borderWidth = 1;
