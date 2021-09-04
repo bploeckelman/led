@@ -1,7 +1,8 @@
 package lando.systems.led.input;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Input.Buttons;
+import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector3;
@@ -9,6 +10,8 @@ import com.github.xpenatan.imgui.ImGui;
 import lando.systems.led.utils.Point;
 import lando.systems.led.world.Level;
 import lando.systems.led.world.World;
+
+import static lando.systems.led.world.Level.DragHandle.Dir.*;
 
 public class WorldInput extends InputAdapter {
 
@@ -23,6 +26,8 @@ public class WorldInput extends InputAdapter {
     // TODO: temporarily exposed until moved to a global input class
     public final Vector3 mouse_screen;
     public final Vector3 mouse_world;
+
+    private Level.DragHandle active_handle;
 
     // exposed because it impacts camera input, handled in Main
     public boolean show_new_level_button;
@@ -43,6 +48,7 @@ public class WorldInput extends InputAdapter {
         this.mouse_screen = new Vector3();
         this.mouse_world = new Vector3();
         this.mouse_buttons = new MouseButtons();
+        this.active_handle = null;
         this.show_new_level_button = false;
     }
 
@@ -53,10 +59,23 @@ public class WorldInput extends InputAdapter {
 
         var active_level = world.get_active_level();
         if (active_level != null) {
-            active_level.left_handle_active   = active_level.left_handle   .contains(mouse_world.x, mouse_world.y);
-            active_level.right_handle_active  = active_level.right_handle  .contains(mouse_world.x, mouse_world.y);
-            active_level.top_handle_active    = active_level.top_handle    .contains(mouse_world.x, mouse_world.y);
-            active_level.bottom_handle_active = active_level.bottom_handle .contains(mouse_world.x, mouse_world.y);
+            for (var handle : active_level.drag_handles.values()) {
+                // update hover state for rendering
+                handle.hovered = handle.circle.contains(mouse_world.x, mouse_world.y)
+                              || handle == active_handle;
+                // update effective radius to maintain consistent size on screen
+                handle.circle.radius = handle.world_radius * camera.zoom;
+            }
+            active_level.update_handles();
+
+            if (!show_new_level_button) {
+                if (mouse_buttons.left_mouse_down && active_handle != null) {
+                    if (active_handle.dir == left)  active_level.set_left_bound(mouse_world.x);
+                    if (active_handle.dir == right) active_level.set_right_bound(mouse_world.x);
+                    if (active_handle.dir == up)    active_level.set_up_bound(mouse_world.y);
+                    if (active_handle.dir == down)  active_level.set_down_bound(mouse_world.y);
+                }
+            }
         }
     }
 
@@ -102,12 +121,12 @@ public class WorldInput extends InputAdapter {
         camera.unproject(touch_world);
 
         switch (button) {
-            case Input.Buttons.LEFT   -> mouse_buttons.left_mouse_down   = true;
-            case Input.Buttons.MIDDLE -> mouse_buttons.middle_mouse_down = true;
-            case Input.Buttons.RIGHT  -> mouse_buttons.right_mouse_down  = true;
+            case Buttons.LEFT   -> mouse_buttons.left_mouse_down   = true;
+            case Buttons.MIDDLE -> mouse_buttons.middle_mouse_down = true;
+            case Buttons.RIGHT  -> mouse_buttons.right_mouse_down  = true;
         }
 
-        if (button == Input.Buttons.RIGHT) {
+        if (button == Buttons.RIGHT) {
             show_new_level_button = !show_new_level_button;
 
             if (show_new_level_button) {
@@ -117,17 +136,29 @@ public class WorldInput extends InputAdapter {
             }
             return true;
         }
-        else if (button == Input.Buttons.MIDDLE) {
+        else if (button == Buttons.MIDDLE) {
             hide_new_level_button();
             return true;
         }
-        else if (button == Input.Buttons.LEFT) {
+        else if (button == Buttons.LEFT) {
             var dismissed_button = hide_new_level_button();
             if (!dismissed_button) {
                 // check whether we clicked on an existing level
                 var clicked_level = world.pick_level_at((int) touch_world.x, (int) touch_world.y);
                 if (clicked_level != null && !world.is_active(clicked_level)) {
                     world.make_active(clicked_level);
+                } else {
+                    // didn't click a different level, check whether we clicked a drag handle
+                    var active_level = world.get_active_level();
+                    if (active_level != null) {
+                        // handle.hovered should be current, but probably best to check the actual touch pos
+                        for (var handle : active_level.drag_handles.values()) {
+                            if (handle.circle.contains(touch_world.x, touch_world.y)) {
+                                active_handle = handle;
+                                break;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -138,17 +169,24 @@ public class WorldInput extends InputAdapter {
     @Override
     public boolean touchUp(int x, int y, int pointer, int button) {
         switch (button) {
-            case Input.Buttons.LEFT   -> mouse_buttons.left_mouse_down   = false;
-            case Input.Buttons.MIDDLE -> mouse_buttons.middle_mouse_down = false;
-            case Input.Buttons.RIGHT  -> mouse_buttons.right_mouse_down  = false;
+            case Buttons.LEFT   -> mouse_buttons.left_mouse_down   = false;
+            case Buttons.MIDDLE -> mouse_buttons.middle_mouse_down = false;
+            case Buttons.RIGHT  -> mouse_buttons.right_mouse_down  = false;
         }
+
+        if (button == Buttons.LEFT) {
+            if (active_handle != null) {
+                active_handle = null;
+            }
+        }
+
         return false;
     }
 
     @Override
     public boolean keyDown(int keycode) {
-        if (keycode == Input.Keys.DEL
-         || keycode == Input.Keys.FORWARD_DEL) {
+        if (keycode == Keys.DEL
+         || keycode == Keys.FORWARD_DEL) {
             // TODO: prompt before deleting
             world.delete_active_level();
             return true;

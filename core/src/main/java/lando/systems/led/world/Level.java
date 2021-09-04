@@ -2,16 +2,51 @@ package lando.systems.led.world;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.utils.ObjectMap;
 import lando.systems.led.utils.Point;
 import lando.systems.led.utils.RectI;
 import space.earlygrey.shapedrawer.JoinType;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
+import static lando.systems.led.world.Level.DragHandle.Dir.*;
+
+// TODO:
+//  - add: 'handle' for moving the level
+//    either a circle with diameter equal to the shortest axis
+//    or a rect that covers most of the interior
+//  - add: move methods
+//  - add: optional layers (tile, entity, ???), maintains their own grid size
+//  - fix: reorient handles if a resize inverts the bounds  (ie. right edge dragged past left edge, etc..)
+
 public class Level {
 
+    public static class DragHandle {
+        public enum Dir { left, right, up, down }
+
+        public final Dir dir;
+
+        // NOTE: radius in this circle is the 'effective radius'
+        //   taking into account the current camera zoom factor
+        //   the 'real' radius is stored in world_radius
+        public Circle circle = new Circle(0, 0, default_handle_radius);
+        public float world_radius = default_handle_radius;
+        public boolean hovered = false;
+
+        public DragHandle(Dir dir) {
+            this.dir = dir;
+        }
+
+        public void render(ShapeDrawer drawer) {
+            drawer.setColor(hovered ? handle : handle_dim);
+            drawer.filledCircle(circle.x,  circle.y, circle.radius);
+            drawer.setColor(Color.WHITE);
+        }
+    }
+
     public static final int default_grid_size = 16;
-    public static final Point default_pixel_bounds = Point.at(10 * default_grid_size, 6 * default_grid_size);
     public static final int default_handle_radius = 5;
+    public static final Point default_pixel_bounds = Point.at(
+            10 * default_grid_size, 6 * default_grid_size);
 
     private static final Color outline       = new Color(0xffd700ff);
     private static final Color outline_dim   = new Color(0xaf770033);
@@ -22,32 +57,16 @@ public class Level {
 
     RectI pixel_bounds = RectI.zero();
 
-    public Circle left_handle   = new Circle();
-    public Circle right_handle  = new Circle();
-    public Circle top_handle    = new Circle();
-    public Circle bottom_handle = new Circle();
-
-    public boolean left_handle_active   = false;
-    public boolean right_handle_active  = false;
-    public boolean top_handle_active    = false;
-    public boolean bottom_handle_active = false;
-
-    // TODO: *** everything should be pixel bounds at this scope ***
-    //   each Level$Layer will have it's own grid with independent sizes
-
-    // TODO:
-    //  - add: handles for each edge (or handle that in world input only for active level?)
-    //  - add: move and resize methods
-    //  - add: optional layers (tile, entity, ???)
+    public final ObjectMap<DragHandle.Dir, DragHandle> drag_handles;
 
     public Level(Point pixel_pos) {
         this.pixel_bounds.set(pixel_pos.x, pixel_pos.y, default_pixel_bounds.x, default_pixel_bounds.y);
-
-        var offset = default_handle_radius;
-        this.left_handle   .set(pixel_bounds.x - offset,                  pixel_bounds.y + pixel_bounds.h / 2, default_handle_radius);
-        this.right_handle  .set(pixel_bounds.x + offset + pixel_bounds.w, pixel_bounds.y + pixel_bounds.h / 2, default_handle_radius);
-        this.top_handle    .set(pixel_bounds.x + pixel_bounds.w / 2, pixel_bounds.y + pixel_bounds.h + offset, default_handle_radius);
-        this.bottom_handle .set(pixel_bounds.x + pixel_bounds.w / 2, pixel_bounds.y - offset, default_handle_radius);
+        this.drag_handles = new ObjectMap<>(4);
+        this.drag_handles.put(left,  new DragHandle(left));
+        this.drag_handles.put(right, new DragHandle(right));
+        this.drag_handles.put(up,    new DragHandle(up));
+        this.drag_handles.put(down,  new DragHandle(down));
+        update_handles();
     }
 
     public void render(ShapeDrawer drawer, boolean is_active) {
@@ -61,22 +80,42 @@ public class Level {
 
         // handles
         if (is_active) {
-            var radius = default_handle_radius;
-
-            drawer.setColor(left_handle_active ? handle : handle_dim);
-            drawer.filledCircle(left_handle.x,  left_handle.y,    radius);
-
-            drawer.setColor(right_handle_active ? handle : handle_dim);
-            drawer.filledCircle(right_handle.x,  right_handle.y,  radius);
-
-            drawer.setColor(top_handle_active ? handle : handle_dim);
-            drawer.filledCircle(top_handle.x,    top_handle.y,    radius);
-
-            drawer.setColor(bottom_handle_active ? handle : handle_dim);
-            drawer.filledCircle(bottom_handle.x, bottom_handle.y, radius);
-
-            drawer.setColor(Color.WHITE);
+            for (var handle : drag_handles.values()) {
+                handle.render(drawer);
+            }
         }
+    }
+
+    public void set_left_bound(float x) {
+        pixel_bounds.w = pixel_bounds.w + (pixel_bounds.x - (int) x);
+        pixel_bounds.x = (int) x;
+        update_handles();
+    }
+
+    public void set_right_bound(float x) {
+        pixel_bounds.w = (int) x - pixel_bounds.x;
+        update_handles();
+    }
+
+    public void set_down_bound(float y) {
+        pixel_bounds.h = pixel_bounds.h + (pixel_bounds.y - (int) y);
+        pixel_bounds.y = (int) y;
+        update_handles();
+    }
+
+    public void set_up_bound(float y) {
+        pixel_bounds.h = (int) y - pixel_bounds.y;
+        update_handles();
+    }
+
+    public void update_handles() {
+        // NOTE: the radii should all be the same,
+        //  they've been updated relative to camera zoom level
+        var offset = drag_handles.get(left).circle.radius;
+        drag_handles.get(left)  .circle.setPosition(pixel_bounds.x - offset,                  pixel_bounds.y + pixel_bounds.h / 2);
+        drag_handles.get(right) .circle.setPosition(pixel_bounds.x + offset + pixel_bounds.w, pixel_bounds.y + pixel_bounds.h / 2);
+        drag_handles.get(up)    .circle.setPosition(pixel_bounds.x + pixel_bounds.w / 2, pixel_bounds.y + pixel_bounds.h + offset);
+        drag_handles.get(down)  .circle.setPosition(pixel_bounds.x + pixel_bounds.w / 2, pixel_bounds.y - offset);
     }
 
 }
