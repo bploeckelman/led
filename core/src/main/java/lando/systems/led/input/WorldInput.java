@@ -7,6 +7,7 @@ import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector3;
 import com.github.xpenatan.imgui.ImGui;
+import lando.systems.led.Main;
 import lando.systems.led.utils.Point;
 import lando.systems.led.world.Level;
 import lando.systems.led.world.World;
@@ -59,6 +60,10 @@ public class WorldInput extends InputAdapter {
 
         var active_level = world.get_active_level();
         if (active_level != null) {
+            // scale the level's fonts
+            Level.font.getData().setScale(camera.zoom);
+
+            // update handles
             for (var handle : active_level.drag_handles.values()) {
                 // update hover state for rendering
                 handle.hovered = handle.circle.contains(mouse_world.x, mouse_world.y)

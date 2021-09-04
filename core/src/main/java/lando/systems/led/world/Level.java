@@ -1,13 +1,14 @@
 package lando.systems.led.world;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.ObjectMap;
-import lando.systems.led.Main;
 import lando.systems.led.utils.Point;
 import lando.systems.led.utils.RectI;
 import space.earlygrey.shapedrawer.JoinType;
@@ -18,7 +19,6 @@ import static lando.systems.led.world.Level.DragHandle.Dir.*;
 // TODO:
 //  - add: optional layers (tile, entity, ???), maintains their own grid size
 //  - fix: reorient handles if a resize inverts the bounds  (ie. right edge dragged past left edge, etc..)
-//  - fix: calc screen size of size text so it scales with camera zoom
 
 public class Level {
 
@@ -47,6 +47,8 @@ public class Level {
         }
     }
 
+    public static final BitmapFont font = new BitmapFont();
+    public static final GlyphLayout layout = new GlyphLayout();
     public static final int default_grid_size = 16;
     public static final int default_handle_radius = 5;
     public static final Point default_pixel_bounds = Point.at(
@@ -91,15 +93,15 @@ public class Level {
             }
 
             // sizes
-            Main.layout.setText(Main.font, String.format("%d px", pixel_bounds.w), Color.WHITE, pixel_bounds.w, Align.center, false);
-            Main.font.draw(batch, Main.layout, pixel_bounds.x, pixel_bounds.y - 30);
+            layout.setText(font, String.format("%d px", pixel_bounds.w), Color.WHITE, pixel_bounds.w, Align.center, false);
+            font.draw(batch, layout, pixel_bounds.x, pixel_bounds.y - 30);
 
             // T_T all this just for sideways text
             batch.end();
             {
-                Main.layout.setText(Main.font, String.format("%d px", pixel_bounds.h), Color.WHITE, pixel_bounds.h, Align.center, false);
+                layout.setText(font, String.format("%d px", pixel_bounds.h), Color.WHITE, pixel_bounds.h, Align.center, false);
 
-                var x = pixel_bounds.x - Main.layout.width - 10;
+                var x = pixel_bounds.x - layout.width - 10;
                 var y = pixel_bounds.y;
                 sideways_text_transform.idt()
                         .rotate(Vector3.Z, 90f)
@@ -109,7 +111,7 @@ public class Level {
                 batch.setTransformMatrix(sideways_text_transform);
                 batch.begin();
                 {
-                    Main.font.draw(batch, Main.layout, 0, 0);
+                    font.draw(batch, layout, 0, 0);
                 }
                 batch.end();
                 batch.setTransformMatrix(prev_matrix);
