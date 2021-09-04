@@ -48,4 +48,27 @@ public class World {
         }
     }
 
+    public boolean is_active(Level level) {
+        return (level == active_level);
+    }
+
+    public void make_active(Level level) {
+        if (level != null) {
+            if (levels.contains(level, true)) {
+                active_level = level;
+            } else {
+                add_level(level);
+            }
+        }
+    }
+
+    public Level pick_level_at(int x, int y) {
+        for (var level : levels) {
+            if (level.pixel_bounds.contains(x, y)) {
+                return level;
+            }
+        }
+        return null;
+    }
+
 }

@@ -75,11 +75,13 @@ public class WorldInput extends InputAdapter {
         }
     }
 
-    private void hide_new_level_button() {
+    private boolean hide_new_level_button() {
+        boolean did_hide = show_new_level_button;
         show_new_level_button = false;
         if (new_level_pos != null) {
             Point.pool.free(new_level_pos);
         }
+        return did_hide;
     }
 
     // ------------------------------------------------------------------------
@@ -107,14 +109,19 @@ public class WorldInput extends InputAdapter {
             }
             return true;
         }
-
-        if (button == Input.Buttons.MIDDLE) {
+        else if (button == Input.Buttons.MIDDLE) {
             hide_new_level_button();
             return true;
         }
-
-        if (button == Input.Buttons.LEFT) {
-            hide_new_level_button();
+        else if (button == Input.Buttons.LEFT) {
+            var dismissed_button = hide_new_level_button();
+            if (!dismissed_button) {
+                // check whether we clicked on an existing level
+                var clicked_level = world.pick_level_at((int) touch_world.x, (int) touch_world.y);
+                if (clicked_level != null && !world.is_active(clicked_level)) {
+                    world.make_active(clicked_level);
+                }
+            }
         }
 
         return false;
