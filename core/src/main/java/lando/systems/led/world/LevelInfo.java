@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class LevelJson {
+public class LevelInfo {
 
     private String name;
     private RectI pixel_bounds;

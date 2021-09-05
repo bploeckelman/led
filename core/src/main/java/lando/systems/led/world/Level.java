@@ -11,7 +11,6 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Json;
-import com.badlogic.gdx.utils.JsonWriter;
 import com.badlogic.gdx.utils.ObjectMap;
 import lando.systems.led.utils.Point;
 import lando.systems.led.utils.RectI;
@@ -85,7 +84,7 @@ public class Level {
 
     private final Matrix4 sideways_text_transform = new Matrix4();
 
-    public Level(LevelJson json) {
+    public Level(LevelInfo json) {
         this.name = json.getName();
         this.pixel_bounds.set(json.getPixel_bounds());
         init();
@@ -123,17 +122,16 @@ public class Level {
         update_handles();
     }
 
-    private Json json_wrangler = new Json(JsonWriter.OutputType.javascript);
-    public void save_to_file() {
-        var filename = "levels/" + name + ".json";
-        save_to_file(filename);
+    // ------------------------------------------------------------------------
+    // Serialization / deserialization
+
+    public String get_info_json(Json json_wrangler) {
+        var level = new LevelInfo(name, pixel_bounds);
+        var json = json_wrangler.prettyPrint(level);
+        return json;
     }
-    public void save_to_file(String filename) {
-        var level = new LevelJson(name, pixel_bounds);
-        var json = json_wrangler.toJson(level, LevelJson.class);
-        var file = Gdx.files.local(filename);
-        file.writeString(json, false);
-    }
+
+    // ------------------------------------------------------------------------
 
     public void render(ShapeDrawer drawer, SpriteBatch batch, boolean is_active) {
         // interior

@@ -86,25 +86,39 @@ public class World {
         return active_level;
     }
 
+    // ------------------------------------------------------------------------
+    // Serialization / deserialization
+
+    private final Json json_wrangler = new Json(JsonWriter.OutputType.javascript);
+
     public void save() {
+        var info = new WorldInfo();
+
         for (var level : levels) {
-            level.save_to_file();
+            var level_json = level.get_info_json(json_wrangler);
+            var level_info = json_wrangler.fromJson(LevelInfo.class, level_json);
+            info.getLevels().add(level_info);
         }
+
+        var file = Gdx.files.local("levels/world-test.json");
+        var info_json = json_wrangler.prettyPrint(info);
+        file.writeString(info_json, false);
     }
 
-    private Json json_wrangler = new Json();
     public void load() {
-        var levels_folder = Gdx.files.local("levels");
-        if (levels_folder.isDirectory()) {
-            var files = levels_folder.list(".json");
-            for (var file : files) {
-                var json = file.readString();
-                var info = json_wrangler.fromJson(LevelJson.class, json);
-                if (info != null) {
-                    var level = new Level(info);
-                    if (level != null) {
-                        add_level(level);
-                    }
+        // TODO: add ui in the caller, select list of files in levels/
+        //  then change signature to load(filename)
+        var filename = "levels/world-test.json";
+
+        var file = Gdx.files.local(filename);
+        if (file.exists()) {
+            var json = file.readString();
+            var info = json_wrangler.fromJson(WorldInfo.class, json);
+            if (info != null) {
+                levels.clear();
+                for (var level_info : info.getLevels()) {
+                    var level = new Level(level_info);
+                    add_level(level);
                 }
             }
         }

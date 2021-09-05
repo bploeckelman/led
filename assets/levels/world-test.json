@@ -1,0 +1,46 @@
+{
+levels: [
+	{
+		name: "basement",
+		pixel_bounds: {
+			x: -156,
+			y: -570,
+			w: 500,
+			h: 150
+		}
+	},
+	{
+		name: "elevator",
+		pixel_bounds: {
+			x: 55,
+			y: -420,
+			w: 69,
+			h: 420
+		}
+	},
+	{
+		name: "entrance",
+		pixel_bounds: {
+			x: -300,
+			w: 300,
+			h: 100
+		}
+	},
+	{
+		name: "penthouse",
+		pixel_bounds: {
+			x: 200,
+			y: 200,
+			w: 250,
+			h: 100
+		}
+	},
+	{
+		name: "tower",
+		pixel_bounds: {
+			w: 200,
+			h: 300
+		}
+	}
+]
+}
