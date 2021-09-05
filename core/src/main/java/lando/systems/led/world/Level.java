@@ -14,32 +14,27 @@ import lando.systems.led.utils.RectI;
 import space.earlygrey.shapedrawer.JoinType;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
-import static lando.systems.led.world.Level.DragHandle.Dir.*;
+import java.util.ArrayList;
 
-// TODO:
-//  - add: optional layers (tile, entity, ???), maintains their own grid size
+import static lando.systems.led.world.Level.DragHandle.Dir.*;
 
 public class Level {
 
-    public static final int default_grid_size = 16;
     public static final int default_handle_radius = 5;
     public static final Point default_pixel_bounds = Point.at(
-            10 * default_grid_size, 6 * default_grid_size);
-
-    private static final Color outline       = new Color(0xffd700ff);
-    private static final Color outline_dim   = new Color(0xaf770033);
-    private static final Color highlight     = new Color(0xdaa5203f);
-    private static final Color highlight_dim = new Color(0xca951033);
-    private static final Color handle        = new Color(100 / 255f, 255 / 255f,  100 / 255f, 0.8f);
-    private static final Color handle_dim    = new Color(150 / 255f, 150 / 255f, 150 / 255f, 0.33f);
-    private static final Color name_color    = new Color(1f, 1f, 1f, 0.25f);
+            10 * Layer.GridAttrib.default_size,
+            6 * Layer.GridAttrib.default_size);
 
     private static int level_index = 0;
 
     public String name;
 
+    // TODO: route all changes to pixel_bounds (resizes, moves) through a method
+    //   need to update layers when pixel_bounds change and it's hard to do right now
     public final RectI pixel_bounds = RectI.zero();
     public final ObjectMap<DragHandle.Dir, DragHandle> drag_handles = new ObjectMap<>(5);
+
+    public final ArrayList<Layer> layers = new ArrayList<>();
 
     private final Matrix4 sideways_text_transform = new Matrix4();
 
@@ -71,6 +66,13 @@ public class Level {
         var level = new LevelInfo(name, pixel_bounds);
         var json = json_wrangler.prettyPrint(level);
         return json;
+    }
+
+    // ------------------------------------------------------------------------
+
+    public void add_layer(Layer new_layer) {
+        if (new_layer == null) return;
+        layers.add(new_layer);
     }
 
     // ------------------------------------------------------------------------
@@ -123,6 +125,13 @@ public class Level {
             }
             batch.begin();
 
+            // render layer content
+            var is_close = true; // TODO: calculate this
+            if (is_close) {
+                for (var layer : layers) {
+                    layer.render(drawer, batch);
+                }
+            }
         }
     }
 
@@ -172,6 +181,15 @@ public class Level {
         drag_handles.get(center).color_dim.set(0.1f, 0.1f, 0.1f, 0.1f);
     }
 
+    public boolean has_layer(Class<? extends Layer> layer_class) {
+        for (var layer : layers) {
+            if (layer.getClass() == layer_class) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public class DragHandle {
         public enum Dir { left, right, up, down, center }
 
@@ -205,5 +223,13 @@ public class Level {
             drawer.setColor(Color.WHITE);
         }
     }
+
+    private static final Color outline       = new Color(0xffd700ff);
+    private static final Color outline_dim   = new Color(0xaf770033);
+    private static final Color highlight     = new Color(0xdaa5203f);
+    private static final Color highlight_dim = new Color(0xca951033);
+    private static final Color handle        = new Color(100 / 255f, 255 / 255f,  100 / 255f, 0.8f);
+    private static final Color handle_dim    = new Color(150 / 255f, 150 / 255f, 150 / 255f, 0.33f);
+    private static final Color name_color    = new Color(1f, 1f, 1f, 0.25f);
 
 }

@@ -16,6 +16,7 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.github.xpenatan.imgui.ImGui;
 import com.github.xpenatan.imgui.ImGuiExt;
+import com.github.xpenatan.imgui.ImGuiInt;
 import com.github.xpenatan.imgui.enums.ImGuiConfigFlags;
 import com.github.xpenatan.imgui.enums.ImGuiInputTextFlags;
 import com.github.xpenatan.imgui.gdx.ImGuiGdxImpl;
@@ -23,7 +24,7 @@ import com.github.xpenatan.imgui.gdx.ImGuiGdxInput;
 import lando.systems.led.input.CameraInput;
 import lando.systems.led.input.Inputs;
 import lando.systems.led.input.WorldInput;
-import lando.systems.led.world.Level;
+import lando.systems.led.world.Layer;
 import lando.systems.led.world.World;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
@@ -217,12 +218,10 @@ public class Main extends ApplicationAdapter {
         ImGui.SetNextWindowSizeConstraints(sidebar_w, sidebar_h, sidebar_w, sidebar_h);
         ImGui.Begin("Level Editor");
         {
-            ImGui.LabelText(" pos:", String.format("(%d, %d)", (int) Inputs.mouse_world.x, (int) Inputs.mouse_world.y));
-            ImGui.LabelText("tile:", String.format("(%d, %d)", (int) Inputs.mouse_world.x / world.grid.getValue(), (int) Inputs.mouse_world.y / world.grid.getValue()));
-            ImGui.LabelText("zoom:", String.format("%.2f", camera.zoom));
+            ImGui.LabelText("pos", String.format("(%d, %d)", (int) Inputs.mouse_world.x, (int) Inputs.mouse_world.y));
+            ImGui.LabelText("zoom", String.format("%.2f", camera.zoom));
 
             if (ImGui.Button("Reset Camera", 100, 25)) {
-                world.grid.setValue(Level.default_grid_size);
                 camera_input.reset_camera();
             }
 
@@ -239,6 +238,8 @@ public class Main extends ApplicationAdapter {
                 }
             }
 
+            ImGui.Separator();
+
             {
                 if (ImGui.Button("Save World")) {
                     world.save();
@@ -251,9 +252,37 @@ public class Main extends ApplicationAdapter {
 
             ImGui.Separator();
 
-            ImGui.Text("Grid Size");
-            ImGui.InputInt("", world.grid, 4, 16);
-            ImGui.SliderInt("", world.grid, 4, 256);
+            {
+                if (active_level != null) {
+                    if (ImGui.Button("Add Tiles")) {
+                        if (!active_level.has_layer(Layer.Tiles.class)) {
+                            var layer = new Layer.Tiles(active_level);
+                            active_level.add_layer(layer);
+                        }
+                    }
+                    ImGui.SameLine();
+                    if (ImGui.Button("Add Entities")) {
+                        if (!active_level.has_layer(Layer.Entities.class)) {
+                            var layer = new Layer.Entities(active_level);
+                            active_level.add_layer(layer);
+                        }
+                    }
+                    // TODO: info about layers for active level
+                    // [x] layers
+                    //  - identifiers
+                    //  - attributes
+                    //  - metadata
+
+                    if (!active_level.layers.isEmpty()) {
+                        var label = "layers";
+                        var current_item = new ImGuiInt(active_level.layers.size());
+                        var items = active_level.layers.stream()
+                                .map(Layer::name).toArray(String[]::new);
+                        var item_count = items.length;
+                        ImGui.ListBox(label, current_item, items, item_count);
+                    }
+                }
+            }
         }
         ImGui.End();
     }

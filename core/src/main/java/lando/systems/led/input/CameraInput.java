@@ -216,4 +216,8 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
 
     }
 
+    public OrthographicCamera get_camera() {
+        return camera;
+    }
+
 }

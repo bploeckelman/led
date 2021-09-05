@@ -1,22 +1,17 @@
 package lando.systems.led.world;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.JsonWriter;
-import com.github.xpenatan.imgui.ImGuiInt;
 import com.github.xpenatan.imgui.ImGuiString;
 import lando.systems.led.input.Inputs;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
 public class World {
-
-    public final ImGuiInt grid;
 
     public String name;
 
@@ -26,7 +21,6 @@ public class World {
     public World(String name) {
         this.name = name;
         this.levels = new Array<>();
-        this.grid = new ImGuiInt(Level.default_grid_size);
         this.active_level = null;
     }
 

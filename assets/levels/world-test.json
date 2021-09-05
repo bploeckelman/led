@@ -51,6 +51,33 @@ levels: [
 			w: 160,
 			h: 250
 		}
+	},
+	{
+		name: "secrets",
+		pixel_bounds: {
+			x: -156,
+			y: -630,
+			w: 156,
+			h: 60
+		}
+	},
+	{
+		name: "danger-hole",
+		pixel_bounds: {
+			x: -156,
+			y: -830,
+			w: 40,
+			h: 200
+		}
+	},
+	{
+		name: "magma-probably",
+		pixel_bounds: {
+			x: -218,
+			y: -926,
+			w: 160,
+			h: 96
+		}
 	}
 ]
 }
