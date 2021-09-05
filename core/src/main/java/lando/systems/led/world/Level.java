@@ -1,8 +1,6 @@
 package lando.systems.led.world;
 
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Matrix4;
@@ -162,7 +160,7 @@ public class Level {
         }
     }
 
-    public void set_center_bound(float x, float y) {
+    public void set_center_pos(float x, float y) {
         pixel_bounds.x = (int) x;
         pixel_bounds.y = (int) y;
         update_handles();

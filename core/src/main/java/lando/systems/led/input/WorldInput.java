@@ -29,6 +29,7 @@ public class WorldInput extends InputAdapter {
     public ImGuiString imgui_world_name_string;
 
     private Level.DragHandle active_handle;
+    private Point move_center;
 
     static class MouseButtons {
         boolean left_mouse_down;
@@ -73,19 +74,25 @@ public class WorldInput extends InputAdapter {
             if (!show_new_level_button) {
                 if (mouse_buttons.left_mouse_down && active_handle != null) {
                     var mouse = Inputs.mouse_world;
+                    var bounds = active_level.pixel_bounds;
+                    var radius = active_handle.circle.radius;
 
-                    if (active_handle.dir == left)   active_level.set_left_bound(mouse.x);
-                    if (active_handle.dir == right)  active_level.set_right_bound(mouse.x);
-                    if (active_handle.dir == up)     active_level.set_up_bound(mouse.y);
-                    if (active_handle.dir == down)   active_level.set_down_bound(mouse.y);
+                    // drag to move the active handle, relative to touch point
+                    // NOTE: the +1s are to adjust for fractional positions on a pixel grid
+                    var dx = move_center.x - touch_world.x;
+                    var dy = move_center.y - touch_world.y;
 
-                    // TODO: don't use mouse.x/y directly as it's offset from the existing center by some amount
-                    //   because of this, the level 'jumps' a bit when it's first made active in order to make
-                    //   the level center be where the user just clicked.
-                    //   instead account for that and offset the move based on the relative position of the mouse from the level center
-                    if (active_handle.dir == center) active_level.set_center_bound(
-                            mouse.x - active_level.pixel_bounds.w / 2f,
-                            mouse.y - active_level.pixel_bounds.h / 2f);
+                    if (active_handle.dir == left) active_level.set_left_bound(mouse.x + dx + radius + 1);
+                    if (active_handle.dir == down) active_level.set_down_bound(mouse.y + dy + radius + 1);
+
+                    if (active_handle.dir == up)    active_level.set_up_bound   (mouse.y + dy - radius + 1);
+                    if (active_handle.dir == right) active_level.set_right_bound(mouse.x + dx - radius + 1);
+
+                    if (active_handle.dir == center) {
+                        active_level.set_center_pos(
+                                mouse.x + dx - bounds.w / 2f,
+                                mouse.y + dy - bounds.h / 2f);
+                    }
                 }
             }
         }
@@ -168,6 +175,7 @@ public class WorldInput extends InputAdapter {
                         if (contains_touch) {
                             active_handle = handle;
                             touched_handle = true;
+                            move_center = Point.at((int) active_handle.circle.x, (int) active_handle.circle.y);
                             break;
                         }
                     }
