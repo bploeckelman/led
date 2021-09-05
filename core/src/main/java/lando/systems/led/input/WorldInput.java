@@ -63,9 +63,10 @@ public class WorldInput extends InputAdapter {
             for (var handle : active_level.drag_handles.values()) {
                 // update hover state for rendering
                 var contains_mouse = (handle.dir == center)
-                        ? active_level.pixel_bounds.contains(Inputs.mouse_world.x, Inputs.mouse_world.y)
+                        ? active_level.pixel_bounds.contains(Inputs.mouse_world)
                         : handle.circle.contains(Inputs.mouse_world.x, Inputs.mouse_world.y);
                 handle.hovered = contains_mouse || handle == active_handle;
+
                 // update effective radius to maintain consistent size on screen
                 handle.circle.radius = handle.world_radius * camera.zoom;
             }
@@ -151,7 +152,7 @@ public class WorldInput extends InputAdapter {
             show_new_level_button = !show_new_level_button;
 
             if (show_new_level_button) {
-                new_level_pos = Point.pool.obtain().set((int) touch_world.x, (int) touch_world.y);
+                new_level_pos = Point.pool.obtain().set(touch_world);
             } else {
                 hide_new_level_button();
             }
@@ -170,12 +171,12 @@ public class WorldInput extends InputAdapter {
                     // check for drag handle touch
                     for (var handle : active_level.drag_handles.values()) {
                         var contains_touch = (handle.dir == center)
-                                ? active_level.pixel_bounds.contains(touch_world.x, touch_world.y)
+                                ? active_level.pixel_bounds.contains(touch_world)
                                 : handle.circle.contains(touch_world.x, touch_world.y);
                         if (contains_touch) {
                             active_handle = handle;
                             touched_handle = true;
-                            move_center = Point.at((int) active_handle.circle.x, (int) active_handle.circle.y);
+                            move_center = Point.at(active_handle.circle.x, active_handle.circle.y);
                             break;
                         }
                     }
@@ -183,7 +184,7 @@ public class WorldInput extends InputAdapter {
 
                 if (!touched_handle) {
                     // check for touch on a different level
-                    var clicked_level = world.pick_level_at((int) touch_world.x, (int) touch_world.y);
+                    var clicked_level = world.pick_level_at(touch_world);
                     if (clicked_level != null && !world.is_active(clicked_level)) {
                         world.make_active(clicked_level);
                     }

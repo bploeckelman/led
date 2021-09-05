@@ -3,6 +3,8 @@ package lando.systems.led.world;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Json;
@@ -80,6 +82,18 @@ public class World {
                 Inputs.camera_input.center_on_level(active_level);
             }
         }
+    }
+
+    public Level pick_level_at(Vector3 point) {
+        return pick_level_at(point.x, point.y);
+    }
+
+    public Level pick_level_at(Vector2 point) {
+        return pick_level_at(point.x, point.y);
+    }
+
+    public Level pick_level_at(float x, float y) {
+        return pick_level_at((int) x, (int) y);
     }
 
     public Level pick_level_at(int x, int y) {

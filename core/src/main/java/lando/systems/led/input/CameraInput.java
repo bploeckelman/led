@@ -15,13 +15,13 @@ import lando.systems.led.world.Level;
 
 public class CameraInput extends InputAdapter implements GestureDetector.GestureListener {
 
-    static final float camera_min_x = -2000;
-    static final float camera_max_x =  2000;
-    static final float camera_min_y = -2000;
-    static final float camera_max_y =  2000;
+    static final float camera_min_x = -5000;
+    static final float camera_max_x =  5000;
+    static final float camera_min_y = -5000;
+    static final float camera_max_y =  5000;
     static final float zoom_min =  0.05f;
-    static final float zoom_max =  5f;
-    static final float pan_speed = 6f;
+    static final float zoom_max =  10f;
+    static final float pan_speed = 10f;
     static final float zoom_speed = 2f;
     static final float default_zoom = 2f;
 
@@ -102,7 +102,7 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
 
         var desired_viewport = Point.pool.obtain();
         {
-            var margin = 50;
+            var margin = 100;
             var bounds = level.pixel_bounds;
 
             // calculate target viewport
@@ -163,11 +163,18 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
     @Override
     public boolean pan(float x, float y, float deltaX, float deltaY) {
         if (pan_enabled && middle_mouse_down) {
-            float scale = (camera.zoom < 0.6f) ? 0.3f : 1f;
+            panning = true;
+
+            float scale = 1;
+            if      (camera.zoom < 0.8f)      scale = 0.3f;
+            else if (camera.zoom < 2.0f)      scale = 0.5f;
+            else if (camera.zoom < 5.0f)      scale = 1.5f;
+            else if (camera.zoom <= zoom_max) scale = 5f;
+
             float new_x = camera.position.x - (scale * deltaX);
             float new_y = camera.position.y + (scale * deltaY);
             target_pos.set(new_x, new_y);
-            panning = true;
+
             return true;
         }
         return false;

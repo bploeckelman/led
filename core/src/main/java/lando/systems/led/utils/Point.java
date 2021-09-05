@@ -1,5 +1,7 @@
 package lando.systems.led.utils;
 
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Pool;
 import com.badlogic.gdx.utils.Pools;
 
@@ -13,6 +15,10 @@ public class Point implements Pool.Poolable {
 
     public static Point at(int x, int y) {
         return new Point(x, y);
+    }
+
+    public static Point at(float x, float y) {
+        return new Point().set(x, y);
     }
 
     public int x;
@@ -31,6 +37,18 @@ public class Point implements Pool.Poolable {
         this.x = x;
         this.y = y;
         return this;
+    }
+
+    public Point set(float x, float y) {
+        return set((int) x, (int) y);
+    }
+
+    public Point set(Vector2 point) {
+        return set(point.x,  point.y);
+    }
+
+    public Point set(Vector3 point) {
+        return set(point.x,  point.y);
     }
 
     public Point set(Point other) {

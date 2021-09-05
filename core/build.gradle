@@ -8,11 +8,14 @@ dependencies {
 	implementation "com.badlogicgames.gdx:gdx-backend-lwjgl:$project.gdxVersion"
 	implementation "com.badlogicgames.gdx:gdx-freetype:$project.gdxVersion"
 	implementation "com.badlogicgames.gdx:gdx-freetype-platform:$project.gdxVersion:natives-desktop"
+
+	/* https://github.com/xpenatan/jDear-imgui/ */
 	implementation "com.github.xpenatan.jDear-Imgui:imgui-core:$project.jDearImguiVersion"
 	implementation "com.github.xpenatan.jDear-Imgui:imgui-core-platform:$project.jDearImguiVersion:natives-desktop"
 	implementation "com.github.xpenatan.jDear-Imgui:imgui-gdx:$project.jDearImguiGdxVersion"
 	implementation "com.github.xpenatan.jDear-Imgui:imgui-ext:$project.jDearImguiLayoutVersion"
 	implementation "com.github.xpenatan.jDear-Imgui:imgui-ext-platform:$project.jDearImguiLayoutVersion:natives-desktop"
+
 	implementation "space.earlygrey:shapedrawer:$project.shapedrawerVersion"
 
 	compileOnly 'org.projectlombok:lombok:1.18.20'

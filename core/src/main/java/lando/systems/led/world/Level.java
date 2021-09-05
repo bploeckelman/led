@@ -21,40 +21,6 @@ import static lando.systems.led.world.Level.DragHandle.Dir.*;
 
 public class Level {
 
-    public class DragHandle {
-        public enum Dir { left, right, up, down, center }
-
-        public final Dir dir;
-
-        // NOTE: radius in this circle is the 'effective radius'
-        //   taking into account the current camera zoom factor
-        //   the 'real' radius is stored in world_radius
-        public Circle circle = new Circle(0, 0, default_handle_radius);
-        public Color color = handle.cpy();
-        public Color color_dim = handle_dim.cpy();
-        public float world_radius = default_handle_radius;
-        public boolean hovered = false;
-
-        public DragHandle(Dir dir) {
-            this.dir = dir;
-        }
-
-        public void render(ShapeDrawer drawer) {
-            drawer.setColor(hovered ? color : color_dim);
-            if (dir == center) {
-                float w = Level.this.pixel_bounds.w;
-                float h = Level.this.pixel_bounds.h;
-                drawer.filledRectangle(
-                        circle.x - w / 2,
-                        circle.y - h / 2,
-                        w, h);
-            } else {
-                drawer.filledCircle(circle.x,  circle.y, circle.radius);
-            }
-            drawer.setColor(Color.WHITE);
-        }
-    }
-
     public static final int default_grid_size = 16;
     public static final int default_handle_radius = 5;
     public static final Point default_pixel_bounds = Point.at(
@@ -204,6 +170,40 @@ public class Level {
                 Math.min(pixel_bounds.w / 2f, pixel_bounds.h / 2f));
         drag_handles.get(center).color.set(1f, 1f, 0f, 0.1f);
         drag_handles.get(center).color_dim.set(0.1f, 0.1f, 0.1f, 0.1f);
+    }
+
+    public class DragHandle {
+        public enum Dir { left, right, up, down, center }
+
+        public final Dir dir;
+
+        // NOTE: radius in this circle is the 'effective radius'
+        //   taking into account the current camera zoom factor
+        //   the 'real' radius is stored in world_radius
+        public Circle circle = new Circle(0, 0, default_handle_radius);
+        public Color color = handle.cpy();
+        public Color color_dim = handle_dim.cpy();
+        public float world_radius = default_handle_radius;
+        public boolean hovered = false;
+
+        public DragHandle(Dir dir) {
+            this.dir = dir;
+        }
+
+        public void render(ShapeDrawer drawer) {
+            drawer.setColor(hovered ? color : color_dim);
+            if (dir == center) {
+                float w = Level.this.pixel_bounds.w;
+                float h = Level.this.pixel_bounds.h;
+                drawer.filledRectangle(
+                        circle.x - w / 2,
+                        circle.y - h / 2,
+                        w, h);
+            } else {
+                drawer.filledCircle(circle.x,  circle.y, circle.radius);
+            }
+            drawer.setColor(Color.WHITE);
+        }
     }
 
 }

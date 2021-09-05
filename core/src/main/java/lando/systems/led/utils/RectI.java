@@ -1,5 +1,7 @@
 package lando.systems.led.utils;
 
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Pool;
 import com.badlogic.gdx.utils.Pools;
 
@@ -85,6 +87,14 @@ public class RectI implements Pool.Poolable {
 
     public boolean contains(float x, float y) {
         return contains((int) x, (int) y);
+    }
+
+    public boolean contains(Vector2 point) {
+        return contains(point.x, point.y);
+    }
+
+    public boolean contains(Vector3 point) {
+        return contains(point.x, point.y);
     }
 
 }

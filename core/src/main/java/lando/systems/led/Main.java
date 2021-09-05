@@ -16,7 +16,6 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.github.xpenatan.imgui.ImGui;
 import com.github.xpenatan.imgui.ImGuiExt;
-import com.github.xpenatan.imgui.ImGuiString;
 import com.github.xpenatan.imgui.enums.ImGuiConfigFlags;
 import com.github.xpenatan.imgui.enums.ImGuiInputTextFlags;
 import com.github.xpenatan.imgui.gdx.ImGuiGdxImpl;
@@ -28,7 +27,6 @@ import lando.systems.led.world.Level;
 import lando.systems.led.world.World;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
-/* https://github.com/xpenatan/jDear-imgui/ */
 public class Main extends ApplicationAdapter {
 
     SpriteBatch batch;
@@ -40,6 +38,7 @@ public class Main extends ApplicationAdapter {
 
     OrthographicCamera camera;
     CameraInput camera_input;
+    GestureDetector camera_input_gesture;
 
     World world;
     WorldInput world_input;
@@ -57,7 +56,6 @@ public class Main extends ApplicationAdapter {
         background = new Texture(Gdx.files.internal("background.png"));
         screen_matrix = new Matrix4().setToOrtho2D(0, 0, Config.viewport_width, Config.viewport_height);
 
-        // build a temp 1 pixel texture for testing shapedrawer
         var pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pixmap.setColor(Color.WHITE);
         pixmap.drawPixel(0, 0);
@@ -77,14 +75,15 @@ public class Main extends ApplicationAdapter {
         world = new World("New");
 
         camera_input = new CameraInput(camera);
+        camera_input_gesture = new GestureDetector(camera_input);
         world_input = new WorldInput(world, camera);
         imgui_input = new ImGuiGdxInput();
         Inputs.init(world_input, camera_input);
 
         var input_mux = new InputMultiplexer(
                   imgui_input
-                , camera_input // as InputProcessor
-                , new GestureDetector(camera_input)
+                , camera_input
+                , camera_input_gesture
                 , world_input
         );
         Gdx.input.setInputProcessor(input_mux);
@@ -176,6 +175,7 @@ public class Main extends ApplicationAdapter {
         }
         batch.end();
 
+        // draw overlay
         batch.setProjectionMatrix(screen_matrix);
         batch.begin();
         {
@@ -186,18 +186,27 @@ public class Main extends ApplicationAdapter {
             {
                 var margin = 5;
                 font.getData().setScale(0.4f);
-                font.setColor(1f, 1f, 1f, 0.5f);
-                layout.setText(font, "World:\n\n" + world.name, Color.WHITE, camera.viewportWidth, Align.right, false);
+                layout.setText(font, world.name, world_name_color, camera.viewportWidth, Align.right, false);
                 font.draw(batch, layout, -margin, camera.viewportHeight - margin);
-                font.setColor(Color.WHITE);
+                var world_name_height = layout.height;
+
+                var active_level = world.get_active_level();
+                if (active_level != null) {
+                    font.getData().setScale(0.33f);
+                    layout.setText(font, active_level.name, level_name_color, camera.viewportWidth, Align.right, false);
+                    font.draw(batch, layout, -margin, camera.viewportHeight - margin - world_name_height - margin);
+                }
             }
             font.getData().setScale(prev_scale_x, prev_scale_y);
+            font.setColor(Color.WHITE);
         }
         batch.end();
 
         // draw ui
         imgui.render(ImGui.GetDrawData());
     }
+    private final Color world_name_color = new Color(1f, 1f, 0.5f, 0.66f);
+    private final Color level_name_color = new Color(0.8f, 0.8f, 0.4f, 0.4f);
 
     private void build_imgui_sidebar() {
         float sidebar_w = 200;
