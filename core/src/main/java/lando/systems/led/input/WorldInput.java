@@ -192,8 +192,24 @@ public class WorldInput extends InputAdapter {
         }
 
         if (button == Buttons.LEFT) {
+            // let go of drag handle
             if (active_handle != null) {
                 active_handle = null;
+
+                var active_level = world.get_active_level();
+                if (active_level != null) {
+                    // reconcile a same-axis edge crossover
+                    // ie. maintain positive width, height
+                    var bounds = active_level.pixel_bounds;
+                    if (bounds.w < 0) {
+                        bounds.w = Math.abs(bounds.w);
+                        bounds.x -= bounds.w;
+                    }
+                    if (bounds.h < 0) {
+                        bounds.h = Math.abs(bounds.h);
+                        bounds.y -= bounds.h;
+                    }
+                }
             }
         }
 
