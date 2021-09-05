@@ -13,7 +13,8 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.ScreenUtils;
-import com.github.xpenatan.imgui.*;
+import com.github.xpenatan.imgui.ImGui;
+import com.github.xpenatan.imgui.ImGuiExt;
 import com.github.xpenatan.imgui.enums.ImGuiConfigFlags;
 import com.github.xpenatan.imgui.enums.ImGuiInputTextFlags;
 import com.github.xpenatan.imgui.gdx.ImGuiGdxImpl;
@@ -24,8 +25,6 @@ import lando.systems.led.input.WorldInput;
 import lando.systems.led.world.Level;
 import lando.systems.led.world.World;
 import space.earlygrey.shapedrawer.ShapeDrawer;
-
-import java.util.Optional;
 
 /* https://github.com/xpenatan/jDear-imgui/ */
 public class Main extends ApplicationAdapter {
@@ -201,6 +200,16 @@ public class Main extends ApplicationAdapter {
             if (active_level != null) {
                 if (ImGui.InputText("Level", world_input.imgui_level_name_string, ImGuiInputTextFlags.EnterReturnsTrue)) {
                     active_level.name = world_input.imgui_level_name_string.getValue();
+                }
+            }
+
+            {
+                if (ImGui.Button("Save World")) {
+                    world.save();
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Load World")) {
+                    world.load();
                 }
             }
 

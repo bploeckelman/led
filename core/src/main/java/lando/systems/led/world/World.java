@@ -1,7 +1,10 @@
 package lando.systems.led.world;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Json;
+import com.badlogic.gdx.utils.JsonWriter;
 import com.github.xpenatan.imgui.ImGuiInt;
 import com.github.xpenatan.imgui.ImGuiString;
 import lando.systems.led.input.Inputs;
@@ -81,6 +84,30 @@ public class World {
 
     public Level get_active_level() {
         return active_level;
+    }
+
+    public void save() {
+        for (var level : levels) {
+            level.save_to_file();
+        }
+    }
+
+    private Json json_wrangler = new Json();
+    public void load() {
+        var levels_folder = Gdx.files.local("levels");
+        if (levels_folder.isDirectory()) {
+            var files = levels_folder.list(".json");
+            for (var file : files) {
+                var json = file.readString();
+                var info = json_wrangler.fromJson(LevelJson.class, json);
+                if (info != null) {
+                    var level = new Level(info);
+                    if (level != null) {
+                        add_level(level);
+                    }
+                }
+            }
+        }
     }
 
 }

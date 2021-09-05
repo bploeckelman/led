@@ -10,6 +10,8 @@ import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Json;
+import com.badlogic.gdx.utils.JsonWriter;
 import com.badlogic.gdx.utils.ObjectMap;
 import lando.systems.led.utils.Point;
 import lando.systems.led.utils.RectI;
@@ -19,9 +21,8 @@ import space.earlygrey.shapedrawer.ShapeDrawer;
 import static lando.systems.led.world.Level.DragHandle.Dir.*;
 
 // TODO:
-//  - fix: reorient bounds/handles if a resize inverts the bounds  (ie. right edge dragged past left edge, etc..)
-//         width and height should always be positive
 //  - add: optional layers (tile, entity, ???), maintains their own grid size
+//  - add: level serialization
 
 public class Level {
 
@@ -80,19 +81,28 @@ public class Level {
     public String name;
 
     public final RectI pixel_bounds = RectI.zero();
-    public final ObjectMap<DragHandle.Dir, DragHandle> drag_handles;
+    public final ObjectMap<DragHandle.Dir, DragHandle> drag_handles = new ObjectMap<>(5);
 
     private final Matrix4 sideways_text_transform = new Matrix4();
+
+    public Level(LevelJson json) {
+        this.name = json.getName();
+        this.pixel_bounds.set(json.getPixel_bounds());
+        init();
+    }
 
     public Level(Point pixel_pos) {
         this.name = "Level_" + level_index++;
         this.pixel_bounds.set(pixel_pos.x, pixel_pos.y, default_pixel_bounds.x, default_pixel_bounds.y);
-        this.drag_handles = new ObjectMap<>(5);
-        this.drag_handles.put(left,   new DragHandle(left));
-        this.drag_handles.put(right,  new DragHandle(right));
-        this.drag_handles.put(up,     new DragHandle(up));
-        this.drag_handles.put(down,   new DragHandle(down));
-        this.drag_handles.put(center, new DragHandle(center));
+        init();
+    }
+
+    private void init() {
+        drag_handles.put(left,   new DragHandle(left));
+        drag_handles.put(right,  new DragHandle(right));
+        drag_handles.put(up,     new DragHandle(up));
+        drag_handles.put(down,   new DragHandle(down));
+        drag_handles.put(center, new DragHandle(center));
 
         if (Level.font == null) {
             var fontFile = Gdx.files.internal("dogicapixel.ttf");
@@ -111,6 +121,18 @@ public class Level {
         }
 
         update_handles();
+    }
+
+    private Json json_wrangler = new Json(JsonWriter.OutputType.javascript);
+    public void save_to_file() {
+        var filename = "levels/" + name + ".json";
+        save_to_file(filename);
+    }
+    public void save_to_file(String filename) {
+        var level = new LevelJson(name, pixel_bounds);
+        var json = json_wrangler.toJson(level, LevelJson.class);
+        var file = Gdx.files.local(filename);
+        file.writeString(json, false);
     }
 
     public void render(ShapeDrawer drawer, SpriteBatch batch, boolean is_active) {

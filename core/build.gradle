@@ -14,4 +14,7 @@ dependencies {
 	implementation "com.github.xpenatan.jDear-Imgui:imgui-ext:$project.jDearImguiLayoutVersion"
 	implementation "com.github.xpenatan.jDear-Imgui:imgui-ext-platform:$project.jDearImguiLayoutVersion:natives-desktop"
 	implementation "space.earlygrey:shapedrawer:$project.shapedrawerVersion"
+
+	compileOnly 'org.projectlombok:lombok:1.18.20'
+	annotationProcessor 'org.projectlombok:lombok:1.18.20'
 }
