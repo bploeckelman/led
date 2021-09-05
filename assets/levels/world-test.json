@@ -1,4 +1,5 @@
 {
+name: "blesstown",
 levels: [
 	{
 		name: "basement",
@@ -40,6 +41,15 @@ levels: [
 		pixel_bounds: {
 			w: 200,
 			h: 300
+		}
+	},
+	{
+		name: "crows-nest",
+		pixel_bounds: {
+			x: 290,
+			y: 300,
+			w: 160,
+			h: 250
 		}
 	}
 ]

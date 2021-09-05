@@ -1,17 +1,16 @@
 package lando.systems.led.world;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.ObjectMap;
+import lando.systems.led.Assets;
 import lando.systems.led.utils.Point;
 import lando.systems.led.utils.RectI;
 import space.earlygrey.shapedrawer.JoinType;
@@ -21,7 +20,6 @@ import static lando.systems.led.world.Level.DragHandle.Dir.*;
 
 // TODO:
 //  - add: optional layers (tile, entity, ???), maintains their own grid size
-//  - add: level serialization
 
 public class Level {
 
@@ -59,9 +57,6 @@ public class Level {
         }
     }
 
-    public static BitmapFont font = null;
-
-    public static final GlyphLayout layout = new GlyphLayout();
     public static final int default_grid_size = 16;
     public static final int default_handle_radius = 5;
     public static final Point default_pixel_bounds = Point.at(
@@ -102,23 +97,6 @@ public class Level {
         drag_handles.put(up,     new DragHandle(up));
         drag_handles.put(down,   new DragHandle(down));
         drag_handles.put(center, new DragHandle(center));
-
-        if (Level.font == null) {
-            var fontFile = Gdx.files.internal("dogicapixel.ttf");
-            var generator = new FreeTypeFontGenerator(fontFile);
-            var parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-            parameter.size = 16;
-            parameter.mono = true;
-            parameter.color = Color.LIGHT_GRAY;
-            parameter.borderColor = new Color(0.1f, 0.1f, 0.1f, 1f);
-            parameter.shadowColor = Color.BLACK;
-            parameter.borderWidth = 1;
-            parameter.shadowOffsetX = 1;
-            parameter.shadowOffsetY = 1;
-            Level.font = generator.generateFont(parameter);
-            generator.dispose();
-        }
-
         update_handles();
     }
 
@@ -143,6 +121,9 @@ public class Level {
         drawer.setColor(Color.WHITE);
 
         if (is_active) {
+            var font = Assets.font;
+            var layout = Assets.layout;
+
             // handles
             for (var handle : drag_handles.values()) {
                 handle.render(drawer);

@@ -12,9 +12,11 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.github.xpenatan.imgui.ImGui;
 import com.github.xpenatan.imgui.ImGuiExt;
+import com.github.xpenatan.imgui.ImGuiString;
 import com.github.xpenatan.imgui.enums.ImGuiConfigFlags;
 import com.github.xpenatan.imgui.enums.ImGuiInputTextFlags;
 import com.github.xpenatan.imgui.gdx.ImGuiGdxImpl;
@@ -47,6 +49,8 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void create() {
+        Assets.init();
+
         batch = new SpriteBatch();
         drawer = new ShapeDrawer(batch);
 
@@ -70,7 +74,7 @@ public class Main extends ApplicationAdapter {
         imgui = new ImGuiGdxImpl();
 
         camera = new OrthographicCamera();
-        world = new World();
+        world = new World("New");
 
         camera_input = new CameraInput(camera);
         world_input = new WorldInput(world, camera);
@@ -172,6 +176,25 @@ public class Main extends ApplicationAdapter {
         }
         batch.end();
 
+        batch.setProjectionMatrix(screen_matrix);
+        batch.begin();
+        {
+            var font = Assets.font;
+            var layout = Assets.layout;
+            var prev_scale_x = font.getData().scaleX;
+            var prev_scale_y = font.getData().scaleY;
+            {
+                var margin = 5;
+                font.getData().setScale(0.4f);
+                font.setColor(1f, 1f, 1f, 0.5f);
+                layout.setText(font, "World:\n\n" + world.name, Color.WHITE, camera.viewportWidth, Align.right, false);
+                font.draw(batch, layout, -margin, camera.viewportHeight - margin);
+                font.setColor(Color.WHITE);
+            }
+            font.getData().setScale(prev_scale_x, prev_scale_y);
+        }
+        batch.end();
+
         // draw ui
         imgui.render(ImGui.GetDrawData());
     }
@@ -185,9 +208,9 @@ public class Main extends ApplicationAdapter {
         ImGui.SetNextWindowSizeConstraints(sidebar_w, sidebar_h, sidebar_w, sidebar_h);
         ImGui.Begin("Level Editor");
         {
-            ImGui.LabelText(" ", String.format(" pos: (%d, %d)", (int) Inputs.mouse_world.x, (int) Inputs.mouse_world.y));
-            ImGui.LabelText(" ", String.format("tile: (%d, %d)", (int) Inputs.mouse_world.x / world.grid.getValue(), (int) Inputs.mouse_world.y / world.grid.getValue()));
-            ImGui.LabelText(" ", String.format("zoom: %.2f", camera.zoom));
+            ImGui.LabelText(" pos:", String.format("(%d, %d)", (int) Inputs.mouse_world.x, (int) Inputs.mouse_world.y));
+            ImGui.LabelText("tile:", String.format("(%d, %d)", (int) Inputs.mouse_world.x / world.grid.getValue(), (int) Inputs.mouse_world.y / world.grid.getValue()));
+            ImGui.LabelText("zoom:", String.format("%.2f", camera.zoom));
 
             if (ImGui.Button("Reset Camera", 100, 25)) {
                 world.grid.setValue(Level.default_grid_size);
@@ -195,6 +218,10 @@ public class Main extends ApplicationAdapter {
             }
 
             ImGui.Separator();
+
+            if (ImGui.InputText("World", world_input.imgui_world_name_string, ImGuiInputTextFlags.EnterReturnsTrue)) {
+                world.name = world_input.imgui_world_name_string.getValue();
+            }
 
             var active_level = world.get_active_level();
             if (active_level != null) {

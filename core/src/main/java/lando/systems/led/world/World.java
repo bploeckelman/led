@@ -1,7 +1,9 @@
 package lando.systems.led.world;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.JsonWriter;
@@ -14,10 +16,13 @@ public class World {
 
     public final ImGuiInt grid;
 
-    final Array<Level> levels;
-    Level active_level;
+    public String name;
 
-    public World() {
+    Level active_level;
+    final Array<Level> levels;
+
+    public World(String name) {
+        this.name = name;
         this.levels = new Array<>();
         this.grid = new ImGuiInt(Level.default_grid_size);
         this.active_level = null;
@@ -27,11 +32,6 @@ public class World {
 
     }
 
-    public void add_level(Level new_level) {
-        levels.add(new_level);
-        make_active(new_level);
-    }
-
     public void render(ShapeDrawer drawer, SpriteBatch batch) {
         for (var level : levels) {
             var is_active = (level == active_level);
@@ -39,8 +39,17 @@ public class World {
         }
     }
 
+    public void add_level(Level new_level) {
+        levels.add(new_level);
+        make_active(new_level);
+    }
+
     public boolean is_active(Level level) {
         return (level == active_level);
+    }
+
+    public Level get_active_level() {
+        return active_level;
     }
 
     public void make_active(Level level) {
@@ -60,15 +69,6 @@ public class World {
         }
     }
 
-    public Level pick_level_at(int x, int y) {
-        for (var level : levels) {
-            if (level.pixel_bounds.contains(x, y)) {
-                return level;
-            }
-        }
-        return null;
-    }
-
     public void delete_active_level() {
         if (active_level != null) {
             levels.removeValue(active_level, true);
@@ -82,8 +82,13 @@ public class World {
         }
     }
 
-    public Level get_active_level() {
-        return active_level;
+    public Level pick_level_at(int x, int y) {
+        for (var level : levels) {
+            if (level.pixel_bounds.contains(x, y)) {
+                return level;
+            }
+        }
+        return null;
     }
 
     // ------------------------------------------------------------------------
@@ -93,6 +98,7 @@ public class World {
 
     public void save() {
         var info = new WorldInfo();
+        info.setName(name);
 
         for (var level : levels) {
             var level_json = level.get_info_json(json_wrangler);
@@ -115,6 +121,9 @@ public class World {
             var json = file.readString();
             var info = json_wrangler.fromJson(WorldInfo.class, json);
             if (info != null) {
+                name = info.getName();
+                Inputs.world_input.imgui_world_name_string = new ImGuiString(name);
+
                 levels.clear();
                 for (var level_info : info.getLevels()) {
                     var level = new Level(level_info);

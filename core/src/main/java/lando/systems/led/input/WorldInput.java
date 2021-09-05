@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector3;
 import com.github.xpenatan.imgui.ImGui;
 import com.github.xpenatan.imgui.ImGuiString;
+import lando.systems.led.Assets;
 import lando.systems.led.utils.Point;
 import lando.systems.led.world.Level;
 import lando.systems.led.world.World;
@@ -25,6 +26,7 @@ public class WorldInput extends InputAdapter {
     boolean show_new_level_button;
     public Point new_level_pos;
     public ImGuiString imgui_level_name_string;
+    public ImGuiString imgui_world_name_string;
 
     private Level.DragHandle active_handle;
 
@@ -41,6 +43,7 @@ public class WorldInput extends InputAdapter {
         this.touch_world = new Vector3();
         this.mouse_buttons = new MouseButtons();
         this.imgui_level_name_string = new ImGuiString();
+        this.imgui_world_name_string = new ImGuiString(world.name);
         this.active_handle = null;
         this.show_new_level_button = false;
     }
@@ -52,8 +55,8 @@ public class WorldInput extends InputAdapter {
     public void update(float dt) {
         var active_level = world.get_active_level();
         if (active_level != null) {
-            // scale the level's fonts
-            Level.font.getData().setScale(camera.zoom * 0.5f);
+            // scale the font
+            Assets.font.getData().setScale(camera.zoom * 0.5f);
 
             // update handles
             for (var handle : active_level.drag_handles.values()) {
