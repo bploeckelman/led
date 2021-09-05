@@ -67,8 +67,8 @@ public class RectI implements Pool.Poolable {
 
     public int left()   { return x; }
     public int right()  { return x + w; }
-    public int top()    { return y; }
-    public int bottom() { return y + h; }
+    public int bottom() { return y; }
+    public int top()    { return y + h; }
 
     @Override
     public void reset() {
