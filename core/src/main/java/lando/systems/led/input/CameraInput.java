@@ -95,7 +95,7 @@ public class CameraInput extends InputAdapter implements GestureDetector.Gesture
 
         // calculate sidebar world width
         // see Main.build_imgui_sidebar(), should probably move gui stuff to it's own class and have this as a constant
-        var sidebar_w = 300;
+        var sidebar_w = 200;
         var sidebar_l = camera.unproject(screen_to_world.set(0, 0, 0)).x;
         var sidebar_r = camera.unproject(screen_to_world.set(sidebar_w, 0, 0)).x;
         var sidebar_screen_w = (int) (sidebar_r - sidebar_l);

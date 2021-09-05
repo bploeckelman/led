@@ -73,13 +73,19 @@ public class Level {
     private static final Color highlight_dim = new Color(0xca951033);
     private static final Color handle        = new Color(100 / 255f, 255 / 255f,  100 / 255f, 0.8f);
     private static final Color handle_dim    = new Color(150 / 255f, 150 / 255f, 150 / 255f, 0.33f);
+    private static final Color name_color    = new Color(1f, 1f, 1f, 0.25f);
+
+    private static int level_index = 0;
+
+    public String name;
 
     public final RectI pixel_bounds = RectI.zero();
-    Matrix4 sideways_text_transform = new Matrix4();
-
     public final ObjectMap<DragHandle.Dir, DragHandle> drag_handles;
 
+    private final Matrix4 sideways_text_transform = new Matrix4();
+
     public Level(Point pixel_pos) {
+        this.name = "Level_" + level_index++;
         this.pixel_bounds.set(pixel_pos.x, pixel_pos.y, default_pixel_bounds.x, default_pixel_bounds.y);
         this.drag_handles = new ObjectMap<>(5);
         this.drag_handles.put(left,   new DragHandle(left));
@@ -121,6 +127,10 @@ public class Level {
             for (var handle : drag_handles.values()) {
                 handle.render(drawer);
             }
+
+            // name
+            layout.setText(font, name, name_color, pixel_bounds.w, Align.center, false);
+            font.draw(batch, layout, pixel_bounds.x, pixel_bounds.y + pixel_bounds.h / 2f + layout.height / 2f);
 
             // sizes
             layout.setText(font, String.format("%d px", pixel_bounds.w), Color.WHITE, pixel_bounds.w, Align.center, false);

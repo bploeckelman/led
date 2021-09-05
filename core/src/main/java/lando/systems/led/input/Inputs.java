@@ -20,6 +20,9 @@ public class Inputs {
         mouse_screen.set(Gdx.input.getX(), Gdx.input.getY(), 0);
         mouse_world.set(mouse_screen);
         camera_input.camera.unproject(mouse_world);
+
+        camera_input.pan_enabled  = !world_input.show_new_level_button;
+        camera_input.zoom_enabled = !world_input.show_new_level_button;
     }
 
 }

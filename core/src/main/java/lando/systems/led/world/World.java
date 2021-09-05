@@ -3,6 +3,7 @@ package lando.systems.led.world;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
 import com.github.xpenatan.imgui.ImGuiInt;
+import com.github.xpenatan.imgui.ImGuiString;
 import lando.systems.led.input.Inputs;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
@@ -25,8 +26,7 @@ public class World {
 
     public void add_level(Level new_level) {
         levels.add(new_level);
-        active_level = new_level;
-        Inputs.camera_input.center_on_level(active_level);
+        make_active(new_level);
     }
 
     public void render(ShapeDrawer drawer, SpriteBatch batch) {
@@ -50,6 +50,9 @@ public class World {
         }
 
         if (active_level != null) {
+            // NOTE: calling setValue() on an ImGuiString doesn't entirely clear the buffer
+            //  so as a workaround recreate it with the appropriate name instead
+            Inputs.world_input.imgui_level_name_string = new ImGuiString(active_level.name);
             Inputs.camera_input.center_on_level(active_level);
         }
     }

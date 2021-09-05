@@ -13,9 +13,9 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.ScreenUtils;
-import com.github.xpenatan.imgui.ImGui;
-import com.github.xpenatan.imgui.ImGuiExt;
+import com.github.xpenatan.imgui.*;
 import com.github.xpenatan.imgui.enums.ImGuiConfigFlags;
+import com.github.xpenatan.imgui.enums.ImGuiInputTextFlags;
 import com.github.xpenatan.imgui.gdx.ImGuiGdxImpl;
 import com.github.xpenatan.imgui.gdx.ImGuiGdxInput;
 import lando.systems.led.input.CameraInput;
@@ -24,6 +24,8 @@ import lando.systems.led.input.WorldInput;
 import lando.systems.led.world.Level;
 import lando.systems.led.world.World;
 import space.earlygrey.shapedrawer.ShapeDrawer;
+
+import java.util.Optional;
 
 /* https://github.com/xpenatan/jDear-imgui/ */
 public class Main extends ApplicationAdapter {
@@ -104,12 +106,9 @@ public class Main extends ApplicationAdapter {
             Gdx.app.exit();
         }
 
-        Inputs.update();
-
         var dt = Gdx.graphics.getDeltaTime();
 
-        camera_input.pan_enabled = !world_input.show_new_level_button;
-        camera_input.zoom_enabled = !world_input.show_new_level_button;
+        Inputs.update();
 
         camera_input.update(dt);
         world_input.update(dt);
@@ -165,8 +164,8 @@ public class Main extends ApplicationAdapter {
             {
                 world.render(drawer, batch);
 
-                if (world_input.show_new_level_button) {
-                    var radius = 4;
+                if (world_input.is_showing_new_level_button()) {
+                    var radius = 3;
                     var pos = world_input.new_level_pos;
                     drawer.filledCircle(pos.x, pos.y, radius, Color.LIME);
                 }
@@ -179,7 +178,7 @@ public class Main extends ApplicationAdapter {
     }
 
     private void build_imgui_sidebar() {
-        float sidebar_w = 300;
+        float sidebar_w = 200;
         float sidebar_h = Gdx.graphics.getHeight();
         float titlebar_h = 40;
         ImGui.SetNextWindowPos(0, 0);
@@ -191,9 +190,18 @@ public class Main extends ApplicationAdapter {
             ImGui.LabelText(" ", String.format("tile: (%d, %d)", (int) Inputs.mouse_world.x / world.grid.getValue(), (int) Inputs.mouse_world.y / world.grid.getValue()));
             ImGui.LabelText(" ", String.format("zoom: %.2f", camera.zoom));
 
-            if (ImGui.Button("Reset", 100, 25)) {
+            if (ImGui.Button("Reset Camera", 100, 25)) {
                 world.grid.setValue(Level.default_grid_size);
                 camera_input.reset_camera();
+            }
+
+            ImGui.Separator();
+
+            var active_level = world.get_active_level();
+            if (active_level != null) {
+                if (ImGui.InputText("Level", world_input.imgui_level_name_string, ImGuiInputTextFlags.EnterReturnsTrue)) {
+                    active_level.name = world_input.imgui_level_name_string.getValue();
+                }
             }
 
             ImGui.Separator();

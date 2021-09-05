@@ -6,6 +6,7 @@ import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector3;
 import com.github.xpenatan.imgui.ImGui;
+import com.github.xpenatan.imgui.ImGuiString;
 import lando.systems.led.utils.Point;
 import lando.systems.led.world.Level;
 import lando.systems.led.world.World;
@@ -18,16 +19,14 @@ public class WorldInput extends InputAdapter {
     final MouseButtons mouse_buttons;
     final World world;
 
-    // TODO: put in a global input class or have a separate one per *Input class?
     final Vector3 touch_screen;
     final Vector3 touch_world;
 
-    private Level.DragHandle active_handle;
-
-    // exposed because it impacts camera input, handled in Main
-    public boolean show_new_level_button;
-
+    boolean show_new_level_button;
     public Point new_level_pos;
+    public ImGuiString imgui_level_name_string;
+
+    private Level.DragHandle active_handle;
 
     static class MouseButtons {
         boolean left_mouse_down;
@@ -41,8 +40,13 @@ public class WorldInput extends InputAdapter {
         this.touch_screen = new Vector3();
         this.touch_world = new Vector3();
         this.mouse_buttons = new MouseButtons();
+        this.imgui_level_name_string = new ImGuiString();
         this.active_handle = null;
         this.show_new_level_button = false;
+    }
+
+    public boolean is_showing_new_level_button() {
+        return show_new_level_button;
     }
 
     public void update(float dt) {
