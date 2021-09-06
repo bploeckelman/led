@@ -52,8 +52,13 @@ public abstract class Layer {
             this.attributes.put(NameAttrib.class, new NameAttrib(Tiles.class.getSimpleName() + count++));
             this.attributes.put(TilesetAttrib.class, new TilesetAttrib());
             this.attributes.put(GridAttrib.class, grid_attrib);
-            this.data = new TileData(level.pixel_bounds, grid_attrib);
-            this.clip_bounds.set(level.pixel_bounds.x, level.pixel_bounds.y, level.pixel_bounds.w, level.pixel_bounds.h);
+            regenerate();
+        }
+
+        public void regenerate() {
+            var grid_attrib = (GridAttrib) attributes.get(GridAttrib.class);
+            data = new TileData(level.pixel_bounds, grid_attrib);
+            clip_bounds.set(level.pixel_bounds.x, level.pixel_bounds.y, level.pixel_bounds.w, level.pixel_bounds.h);
         }
 
         @Override
@@ -64,14 +69,16 @@ public abstract class Layer {
 
             // tile layers can extend slightly past a level's pixel bounds
             // update the scissor stack to clip it to pixel bounds
-            clip_bounds.set(level.pixel_bounds.x, level.pixel_bounds.y, level.pixel_bounds.w, level.pixel_bounds.h);
-            ScissorStack.calculateScissors(Inputs.camera_input.get_camera(), batch.getTransformMatrix(), clip_bounds, scissors);
-            if (ScissorStack.pushScissors(scissors)) {
-                for (var tile : tile_data.tiles) {
-                    tile.render(drawer, batch, level, grid_attrib, tileset_attrib);
+            if (tile_data.visible) {
+                clip_bounds.set(level.pixel_bounds.x, level.pixel_bounds.y, level.pixel_bounds.w, level.pixel_bounds.h);
+                ScissorStack.calculateScissors(Inputs.camera_input.get_camera(), batch.getTransformMatrix(), clip_bounds, scissors);
+                if (ScissorStack.pushScissors(scissors)) {
+                    for (var tile : tile_data.tiles) {
+                        tile.render(drawer, batch, level, grid_attrib, tileset_attrib);
+                    }
+                    batch.flush();
+                    ScissorStack.popScissors();
                 }
-                batch.flush();
-                ScissorStack.popScissors();
             }
         }
     }
@@ -99,9 +106,11 @@ public abstract class Layer {
 
     static abstract class Data {}
 
-    static class TileData extends Data {
+    public static class TileData extends Data {
+        public boolean visible;
         public final Array<Tile> tiles;
         public TileData(RectI pixel_bounds, GridAttrib grid) {
+            this.visible = true;
             var cols = MathUtils.ceil((float) pixel_bounds.w / grid.size);
             var rows = MathUtils.ceil((float) pixel_bounds.h / grid.size);
             this.tiles = new Array<>(cols * rows);

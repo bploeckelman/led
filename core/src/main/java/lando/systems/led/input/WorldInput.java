@@ -9,6 +9,7 @@ import com.github.xpenatan.imgui.ImGui;
 import com.github.xpenatan.imgui.ImGuiString;
 import lando.systems.led.Assets;
 import lando.systems.led.utils.Point;
+import lando.systems.led.world.Layer;
 import lando.systems.led.world.Level;
 import lando.systems.led.world.World;
 
@@ -177,6 +178,12 @@ public class WorldInput extends InputAdapter {
                             active_handle = handle;
                             touched_handle = true;
                             move_center = Point.at(active_handle.circle.x, active_handle.circle.y);
+
+                            var tile_layer = (Layer.Tiles) active_level.get_layer(Layer.Tiles.class);
+                            if (tile_layer != null) {
+                                var tile_data = (Layer.TileData) tile_layer.data;
+                                tile_data.visible = false;
+                            }
                             break;
                         }
                     }
@@ -220,6 +227,14 @@ public class WorldInput extends InputAdapter {
                     if (bounds.h < 0) {
                         bounds.h = Math.abs(bounds.h);
                         bounds.y -= bounds.h;
+                    }
+
+                    // if this level has a tile layer, regenerate it based on the new size
+                    var tile_layer = (Layer.Tiles) active_level.get_layer(Layer.Tiles.class);
+                    if (tile_layer != null) {
+                        tile_layer.regenerate();
+                        var tile_data = (Layer.TileData) tile_layer.data;
+                        tile_data.visible = true;
                     }
                 }
             }
