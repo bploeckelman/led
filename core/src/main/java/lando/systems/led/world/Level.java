@@ -190,11 +190,11 @@ public class Level {
         return false;
     }
 
-    public Layer get_layer(Class<? extends Layer> layer_class) {
+    public <T extends Layer> T get_layer(Class<T> clazz) {
         // TODO: add support for multiple layers of the same type
         for (var layer : layers) {
-            if (layer.getClass() == layer_class) {
-                return layer_class.cast(layer);
+            if (clazz.isInstance(layer)) {
+                return clazz.cast(layer);
             }
         }
         return null;

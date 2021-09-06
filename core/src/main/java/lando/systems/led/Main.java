@@ -257,6 +257,8 @@ public class Main extends ApplicationAdapter {
                     if (ImGui.Button("Add Tiles")) {
                         if (!active_level.has_layer(Layer.Tiles.class)) {
                             var layer = new Layer.Tiles(active_level);
+                            var tileset_attrib = layer.get_attribute(Layer.TilesetAttrib.class);
+                            tileset_attrib.tileset.load("tilesets/paper-pixels8.png", 8);
                             active_level.add_layer(layer);
                         }
                     }

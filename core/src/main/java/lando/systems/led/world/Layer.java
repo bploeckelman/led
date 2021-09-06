@@ -1,5 +1,6 @@
 package lando.systems.led.world;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
@@ -10,6 +11,8 @@ import lando.systems.led.input.Inputs;
 import lando.systems.led.utils.RectI;
 import lombok.RequiredArgsConstructor;
 import space.earlygrey.shapedrawer.ShapeDrawer;
+
+import java.lang.reflect.InvocationTargetException;
 
 public abstract class Layer {
 
@@ -30,6 +33,25 @@ public abstract class Layer {
 
     public abstract void render(ShapeDrawer drawer, SpriteBatch batch);
 
+    public <T extends Attribute> T get_attribute(Class<T> clazz) {
+        var attrib = attributes.get(clazz);
+        return clazz.cast(attrib);
+    }
+
+    public <T extends Attribute> T add_attribute(Class<T> clazz) {
+        T instance = null;
+        try {
+            var ctor = clazz.getConstructors()[0];
+            instance = clazz.cast(ctor.newInstance());
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            Gdx.app.error("failed", "Layer add_attribute", e);
+        }
+        if (instance != null) {
+            attributes.put(clazz, instance);
+        }
+        return instance;
+    }
+
     public String name() {
         var name_attrib = (NameAttrib) attributes.get(NameAttrib.class);
         if (name_attrib != null) {
@@ -48,15 +70,14 @@ public abstract class Layer {
 
         public Tiles(Level level) {
             super(Type.tile, level);
-            var grid_attrib = new GridAttrib();
             this.attributes.put(NameAttrib.class, new NameAttrib(Tiles.class.getSimpleName() + count++));
             this.attributes.put(TilesetAttrib.class, new TilesetAttrib());
-            this.attributes.put(GridAttrib.class, grid_attrib);
+            this.attributes.put(GridAttrib.class, new GridAttrib());
             regenerate();
         }
 
         public void regenerate() {
-            var grid_attrib = (GridAttrib) attributes.get(GridAttrib.class);
+            var grid_attrib = get_attribute(GridAttrib.class);
             data = new TileData(level.pixel_bounds, grid_attrib);
             clip_bounds.set(level.pixel_bounds.x, level.pixel_bounds.y, level.pixel_bounds.w, level.pixel_bounds.h);
         }
@@ -64,8 +85,8 @@ public abstract class Layer {
         @Override
         public void render(ShapeDrawer drawer, SpriteBatch batch) {
             var tile_data = (TileData) data;
-            var grid_attrib = (GridAttrib) attributes.get(GridAttrib.class);
-            var tileset_attrib = (TilesetAttrib) attributes.get(TilesetAttrib.class);
+            var grid_attrib = get_attribute(GridAttrib.class);
+            var tileset_attrib = get_attribute(TilesetAttrib.class);
 
             // tile layers can extend slightly past a level's pixel bounds
             // update the scissor stack to clip it to pixel bounds
@@ -122,7 +143,7 @@ public abstract class Layer {
         }
     }
 
-    static class EntityData extends Data {
+    public static class EntityData extends Data {
         public Array<Entity> entities = new Array<>();
     }
 
@@ -131,12 +152,12 @@ public abstract class Layer {
     static abstract class Attribute {}
 
     @RequiredArgsConstructor
-    static class NameAttrib extends Attribute {
+    public static class NameAttrib extends Attribute {
         public final String name;
     }
 
     @RequiredArgsConstructor
-    static class GridAttrib extends Attribute {
+    public static class GridAttrib extends Attribute {
         public static final int default_size = 16;
         public final int size;
         public GridAttrib() {
@@ -145,12 +166,8 @@ public abstract class Layer {
     }
 
     @RequiredArgsConstructor
-    static class TilesetAttrib extends Attribute {
-        public static final Tileset default_tileset = new Tileset();
-        public final Tileset tileset;
-        public TilesetAttrib() {
-            this.tileset = default_tileset;
-        }
+    public static class TilesetAttrib extends Attribute {
+        public final Tileset tileset = new Tileset();
     }
 
 }

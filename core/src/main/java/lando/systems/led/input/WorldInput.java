@@ -123,6 +123,28 @@ public class WorldInput extends InputAdapter {
             }
             ImGui.End();
         }
+
+        var active_level = world.get_active_level();
+        if (active_level != null) {
+            var tiles = active_level.get_layer(Layer.Tiles.class);
+            if (tiles != null) {
+                var tileset_attrib = tiles.get_attribute(Layer.TilesetAttrib.class);
+                if (tileset_attrib != null) {
+                    var tileset = tileset_attrib.tileset;
+                    ImGui.SetNextWindowPos(200, 0);
+                    ImGui.Begin("Tileset");
+                    {
+                        ImGui.Text(tileset.filename);
+                        ImGui.LabelText("grid size", "" + tileset.grid_size);
+
+                        var width = tileset.texture.getWidth();
+                        var height = tileset.texture.getHeight();
+                        ImGui.Image(tileset.texture.getTextureObjectHandle(), width, height);
+                    }
+                    ImGui.End();
+                }
+            }
+        }
     }
 
     private boolean hide_new_level_button() {
