@@ -9,6 +9,8 @@ public class Tileset implements Disposable {
     public String filename;
     public Texture texture;
     public int grid_size;
+    public int cols;
+    public int rows;
 
     private TextureRegion[][] textures;
 
@@ -21,17 +23,25 @@ public class Tileset implements Disposable {
         this.texture = new Texture(filename);
         this.textures = TextureRegion.split(texture, grid_size, grid_size);
         this.grid_size = grid_size;
+        this.cols = textures[0].length;
+        this.rows = textures.length;
     }
 
     public TextureRegion get(int index) {
-        int x = index / grid_size;
-        int y = index % grid_size;
+        int x = index % cols;
+        int y = index / cols;
 
-        if (x < 0 || y < 0 || x >= grid_size || y >= grid_size) {
+        if (x < 0 || y < 0 || x >= cols || y >= rows) {
             return null;
         }
+        return textures[y][x];
+    }
 
-        return textures[x][y];
+    public TextureRegion get(int x, int y) {
+        if (x < 0 || y < 0 || x >= cols || y >= rows) {
+            return null;
+        }
+        return textures[y][x];
     }
 
     @Override

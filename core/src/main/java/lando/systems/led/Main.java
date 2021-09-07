@@ -92,6 +92,7 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void dispose() {
+        Assets.dispose();
         ImGui.dispose();
         imgui.dispose();
         batch.dispose();
