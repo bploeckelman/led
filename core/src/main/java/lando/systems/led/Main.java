@@ -22,6 +22,7 @@ import com.github.xpenatan.imgui.gdx.ImGuiGdxImpl;
 import com.github.xpenatan.imgui.gdx.ImGuiGdxInput;
 import lando.systems.led.input.CameraInput;
 import lando.systems.led.input.Inputs;
+import lando.systems.led.input.TilesetInput;
 import lando.systems.led.input.WorldInput;
 import lando.systems.led.world.Layer;
 import lando.systems.led.world.World;
@@ -42,6 +43,7 @@ public class Main extends ApplicationAdapter {
 
     World world;
     WorldInput world_input;
+    TilesetInput tileset_input;
 
     private Texture background;
     private OrthographicCamera screen_camera;
@@ -79,11 +81,13 @@ public class Main extends ApplicationAdapter {
         camera_input = new CameraInput(camera);
         camera_input_gesture = new GestureDetector(camera_input);
         world_input = new WorldInput(world, camera);
+        tileset_input = new TilesetInput(world, screen_camera);
         imgui_input = new ImGuiGdxInput();
-        Inputs.init(world_input, camera_input);
+        Inputs.init(world_input, camera_input, tileset_input);
 
         var input_mux = new InputMultiplexer(
                   imgui_input
+                , tileset_input
                 , camera_input
                 , camera_input_gesture
                 , world_input
@@ -117,6 +121,7 @@ public class Main extends ApplicationAdapter {
 
         camera_input.update(dt);
         world_input.update(dt);
+        tileset_input.update(dt);
 
         imgui.update();
     }
@@ -182,10 +187,17 @@ public class Main extends ApplicationAdapter {
         }
         batch.end();
 
+        // draw ui
+        imgui.render(ImGui.GetDrawData());
+
         // draw overlay
         batch.setProjectionMatrix(screen_camera.combined);
         batch.begin();
         {
+            {
+                tileset_input.render_gui(drawer, batch);
+            }
+
             var font = Assets.font;
             var layout = Assets.layout;
             var prev_scale_x = font.getData().scaleX;
@@ -208,9 +220,6 @@ public class Main extends ApplicationAdapter {
             font.setColor(Color.WHITE);
         }
         batch.end();
-
-        // draw ui
-        imgui.render(ImGui.GetDrawData());
     }
     private final Color world_name_color = new Color(1f, 1f, 0.5f, 0.66f);
     private final Color level_name_color = new Color(0.8f, 0.8f, 0.4f, 0.4f);

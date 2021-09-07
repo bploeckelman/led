@@ -10,10 +10,12 @@ public class Inputs {
 
     public static WorldInput world_input;
     public static CameraInput camera_input;
+    public static TilesetInput tileset_input;
 
-    public static void init(WorldInput world_input, CameraInput camera_input) {
+    public static void init(WorldInput world_input, CameraInput camera_input, TilesetInput tileset_input) {
         Inputs.world_input = world_input;
         Inputs.camera_input = camera_input;
+        Inputs.tileset_input = tileset_input;
     }
 
     public static void update() {

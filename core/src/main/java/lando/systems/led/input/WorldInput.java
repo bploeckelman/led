@@ -1,6 +1,5 @@
 package lando.systems.led.input;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputAdapter;
@@ -8,8 +7,6 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector3;
 import com.github.xpenatan.imgui.ImGui;
 import com.github.xpenatan.imgui.ImGuiString;
-import com.github.xpenatan.imgui.enums.ImGuiCol;
-import com.github.xpenatan.imgui.enums.ImGuiTableColumnFlags;
 import lando.systems.led.Assets;
 import lando.systems.led.utils.Point;
 import lando.systems.led.world.Layer;
@@ -126,55 +123,6 @@ public class WorldInput extends InputAdapter {
                 }
             }
             ImGui.End();
-        }
-
-        var active_level = world.get_active_level();
-        if (active_level != null) {
-            var tiles = active_level.get_layer(Layer.Tiles.class);
-            if (tiles != null) {
-                var tileset_attrib = tiles.get_attribute(Layer.TilesetAttrib.class);
-                if (tileset_attrib != null) {
-                    var tileset = tileset_attrib.tileset;
-                    ImGui.SetNextWindowPos(200, 0);
-                    ImGui.Begin("Tileset");
-                    {
-                        // TODO:
-                        //   this kinda sorta works, but isn't very flexible
-                        //   seems like setting a background color for a table cell is unsupported in jDearImgui
-                        //   and regardless it'll be tough to support important ease of use features via imgui
-                        //   - pan/zoom
-                        //   - multi-select
-
-                        ImGui.Text(tileset.filename);
-                        ImGui.LabelText("grid size", "" + tileset.grid_size);
-
-                        // draw in a table in order to do row/col
-                        if (ImGui.BeginTable("Tiles", tileset.cols)) {
-                            var scale = 4;
-                            var view_size = tileset.grid_size * scale;
-                            var texture_id = tileset.texture.getTextureObjectHandle();
-                            for (int y = 0; y < tileset.rows; y++) {
-                                for (int x = 0; x < tileset.cols; x++) {
-                                    ImGui.TableNextColumn();
-                                    var region = tileset.get(x, y);
-                                    var tile_id = String.format("tile_%d_%d", x, y);
-                                    if (selected_tile_id != null && selected_tile_id.equals(tile_id)) {
-                                        ImGui.Image(Assets.outline.getTextureObjectHandle(), view_size, 2);
-                                    }
-                                    ImGui.PushID(tile_id);
-                                    if (ImGui.ImageButton(texture_id, view_size, view_size,
-                                            region.getU(), region.getV(), region.getU2(), region.getV2(), 1)) {
-                                        selected_tile_id = tile_id;
-                                    }
-                                    ImGui.PopID();
-                                }
-                            }
-                            ImGui.EndTable();
-                        }
-                    }
-                    ImGui.End();
-                }
-            }
         }
     }
 
