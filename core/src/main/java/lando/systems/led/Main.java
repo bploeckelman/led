@@ -11,7 +11,6 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.input.GestureDetector;
-import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.github.xpenatan.imgui.ImGui;
@@ -45,7 +44,7 @@ public class Main extends ApplicationAdapter {
     WorldInput world_input;
 
     private Texture background;
-    private Matrix4 screen_matrix;
+    private OrthographicCamera screen_camera;
 
     @Override
     public void create() {
@@ -55,7 +54,9 @@ public class Main extends ApplicationAdapter {
         drawer = new ShapeDrawer(batch);
 
         background = new Texture(Gdx.files.internal("background.png"));
-        screen_matrix = new Matrix4().setToOrtho2D(0, 0, Config.viewport_width, Config.viewport_height);
+        screen_camera = new OrthographicCamera();
+        screen_camera.setToOrtho(false, Config.window_width, Config.window_height);
+        screen_camera.update();
 
         var pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pixmap.setColor(Color.WHITE);
@@ -135,10 +136,14 @@ public class Main extends ApplicationAdapter {
         ImGui.Render();
 
         // draw background
-        batch.setProjectionMatrix(screen_matrix);
+        batch.setProjectionMatrix(screen_camera.combined);
         batch.begin();
         {
-            batch.draw(background, -Config.window_width / 2f, -Config.window_height / 2f, Config.window_width, Config.window_height);
+            // scale up so it's not as dense of a grid
+            var scale = 4f;
+            batch.draw(background, 0, 0,
+                    screen_camera.viewportWidth * scale,
+                    screen_camera.viewportHeight * scale);
         }
         batch.end();
 
@@ -178,7 +183,7 @@ public class Main extends ApplicationAdapter {
         batch.end();
 
         // draw overlay
-        batch.setProjectionMatrix(screen_matrix);
+        batch.setProjectionMatrix(screen_camera.combined);
         batch.begin();
         {
             var font = Assets.font;
@@ -187,16 +192,16 @@ public class Main extends ApplicationAdapter {
             var prev_scale_y = font.getData().scaleY;
             {
                 var margin = 5;
-                font.getData().setScale(0.4f);
-                layout.setText(font, world.name, world_name_color, camera.viewportWidth, Align.right, false);
-                font.draw(batch, layout, -margin, camera.viewportHeight - margin);
+                font.getData().setScale(1.4f);
+                layout.setText(font, world.name, world_name_color, screen_camera.viewportWidth, Align.right, false);
+                font.draw(batch, layout, -margin, screen_camera.viewportHeight - margin);
                 var world_name_height = layout.height;
 
                 var active_level = world.get_active_level();
                 if (active_level != null) {
-                    font.getData().setScale(0.33f);
-                    layout.setText(font, active_level.name, level_name_color, camera.viewportWidth, Align.right, false);
-                    font.draw(batch, layout, -margin, camera.viewportHeight - margin - world_name_height - margin);
+                    font.getData().setScale(1.33f);
+                    layout.setText(font, active_level.name, level_name_color, screen_camera.viewportWidth, Align.right, false);
+                    font.draw(batch, layout, -margin, screen_camera.viewportHeight - margin - world_name_height - margin);
                 }
             }
             font.getData().setScale(prev_scale_x, prev_scale_y);
