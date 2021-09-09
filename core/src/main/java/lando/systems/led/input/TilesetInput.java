@@ -1,14 +1,18 @@
 package lando.systems.led.input;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.utils.ScissorStack;
 import com.badlogic.gdx.utils.Align;
 import lando.systems.led.Assets;
+import lando.systems.led.utils.Point;
 import lando.systems.led.utils.RectI;
 import lando.systems.led.world.Layer;
 import lando.systems.led.world.Tileset;
@@ -22,22 +26,24 @@ public class TilesetInput extends InputAdapter {
 
     final World world;
     final OrthographicCamera camera;
-    final Vector3 touch_screen;
-    final Vector3 touch_world;
+    final Vector3 touch_screen = new Vector3();
+    final Vector3 touch_world = new Vector3();
+    final Vector3 mouse_screen = new Vector3();
+    final Vector3 mouse_world = new Vector3();
 
     private final RectI rect;
     private final RectI header_rect;
     private final RectI tiles_rect;
+    private final Point touch_delta = Point.zero();
     private final Color background = new Color(0.2f, 0.3f, 0.2f, 0.5f);
     private final Color outline = new Color(Color.SKY);
     private final Rectangle scissors = new Rectangle();
     private final Rectangle clip_bounds = new Rectangle();
+    private boolean header_touched;
 
     public TilesetInput(World world, OrthographicCamera camera) {
         this.world = world;
         this.camera = camera;
-        this.touch_screen = new Vector3();
-        this.touch_world = new Vector3();
         this.tileset = null;
         this.visible = true;
         var size = 400;
@@ -45,9 +51,14 @@ public class TilesetInput extends InputAdapter {
         this.rect = RectI.of(200, (int) camera.viewportHeight - size, size, size);
         this.header_rect = RectI.of(rect.x, rect.y + rect.h - header_h, size, header_h);
         this.tiles_rect = RectI.of(rect.x, rect.y, rect.w, rect.h - header_rect.h);
+        this.header_touched = false;
     }
 
     public void update(float dt) {
+        mouse_screen.set(Gdx.input.getX(), Gdx.input.getY(), 0);
+        mouse_world.set(mouse_screen);
+        camera.unproject(mouse_world);
+
         var has_tileset = false;
 
         var level = world.get_active_level();
@@ -66,6 +77,24 @@ public class TilesetInput extends InputAdapter {
         if (!has_tileset) {
             tileset = null;
             visible = false;
+        }
+
+        if (visible && header_touched) {
+            // handle window drag
+            {
+                // reposition window relative to where we touched
+                int x = (int) mouse_world.x;
+                int y = (int) mouse_world.y;
+                rect.setPosition(x + touch_delta.x, y + touch_delta.y);
+
+                // keep window on screen
+                rect.x = (int) MathUtils.clamp(rect.x, 0, camera.viewportWidth - rect.w);
+                rect.y = (int) MathUtils.clamp(rect.y, 0, camera.viewportHeight - rect.h);
+
+                // update child window regions
+                header_rect.setPosition(rect.x, rect.y + rect.h - header_rect.h);
+                tiles_rect.setPosition(rect.x, rect.y);
+            }
         }
     }
 
@@ -139,13 +168,25 @@ public class TilesetInput extends InputAdapter {
         touch_world.set(touch_screen);
         camera.unproject(touch_world);
 
-        // ...
+        if (button == Input.Buttons.LEFT) {
+            // if touched in header rect, initiate a drag for the entire window
+            if (header_rect.contains(touch_world)) {
+                header_touched = true;
+                touch_delta.set(rect.x - (int) touch_world.x, rect.y - (int) touch_world.y);
+                return true;
+            }
+            // TODO: if touched in tile rect, initiate a pan for just the tile rect contents
+        }
 
         return false;
     }
 
     @Override
     public boolean touchUp(int x, int y, int pointer, int button) {
+        if (button == Input.Buttons.LEFT) {
+            header_touched = false;
+            return true;
+        }
         return false;
     }
 
