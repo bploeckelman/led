@@ -1,5 +1,6 @@
 package lando.systems.led.input;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputAdapter;
@@ -9,6 +10,7 @@ import com.github.xpenatan.imgui.ImGui;
 import com.github.xpenatan.imgui.ImGuiString;
 import lando.systems.led.Assets;
 import lando.systems.led.utils.Point;
+import lando.systems.led.utils.RectI;
 import lando.systems.led.world.Layer;
 import lando.systems.led.world.Level;
 import lando.systems.led.world.World;
@@ -28,10 +30,10 @@ public class WorldInput extends InputAdapter {
     public Point new_level_pos;
     public ImGuiString imgui_level_name_string;
     public ImGuiString imgui_world_name_string;
-    public String selected_tile_id;
 
     private Level.DragHandle active_handle;
     private Point move_center;
+    private boolean painting;
 
     static class MouseButtons {
         boolean left_mouse_down;
@@ -49,6 +51,7 @@ public class WorldInput extends InputAdapter {
         this.imgui_world_name_string = new ImGuiString(world.name);
         this.active_handle = null;
         this.show_new_level_button = false;
+        this.painting = false;
     }
 
     public boolean is_showing_new_level_button() {
@@ -95,6 +98,32 @@ public class WorldInput extends InputAdapter {
                         active_level.set_center_pos(
                                 mouse.x + dx - bounds.w / 2f,
                                 mouse.y + dy - bounds.h / 2f);
+                    }
+                }
+            }
+
+            // check for tile layer touch
+            if (painting && mouse_buttons.left_mouse_down) {
+                var tiles_layer = active_level.get_layer(Layer.Tiles.class);
+                if (tiles_layer != null && Inputs.tileset_input.selected_tile_id != -1) {
+                    var tile_data = (Layer.TileData) tiles_layer.data;
+                    var grid_attrib = tiles_layer.get_attribute(Layer.GridAttrib.class);
+                    if (tile_data.visible && grid_attrib != null) {
+                        var grid_size = grid_attrib.size;
+                        var tile_rect = RectI.pool.obtain();
+                        {
+                            for (var tile : tile_data.tiles) {
+                                tile_rect.set(
+                                        active_level.pixel_bounds.x + tile.grid.x * grid_size,
+                                        active_level.pixel_bounds.y + tile.grid.y * grid_size,
+                                        grid_size, grid_size);
+                                if (tile_rect.contains(Inputs.mouse_world)) {
+                                    tile.tileset_index = Inputs.tileset_input.selected_tile_id;
+                                    break;
+                                }
+                            }
+                        }
+                        RectI.pool.free(tile_rect);
                     }
                 }
             }
@@ -170,6 +199,33 @@ public class WorldInput extends InputAdapter {
                 var touched_handle = false;
                 var active_level = world.get_active_level();
                 if (active_level != null) {
+                    // check for tile layer touch to draw tiles
+                    //   also done in update() to handle drag painting,
+                    //   could tighten it up a bit, but the flag is set here
+                    {
+                        var tiles_layer = active_level.get_layer(Layer.Tiles.class);
+                        if (tiles_layer != null && Inputs.tileset_input.selected_tile_id != -1) {
+                            var tile_data = (Layer.TileData) tiles_layer.data;
+                            var grid_attrib = tiles_layer.get_attribute(Layer.GridAttrib.class);
+                            if (tile_data.visible && grid_attrib != null) {
+                                var grid_size = grid_attrib.size;
+                                var tile_rect = RectI.pool.obtain();
+                                for (var tile : tile_data.tiles) {
+                                    tile_rect.set(
+                                            active_level.pixel_bounds.x + tile.grid.x * grid_size,
+                                            active_level.pixel_bounds.y + tile.grid.y * grid_size,
+                                            grid_size, grid_size);
+                                    if (tile_rect.contains(touch_world)) {
+                                        painting = true;
+                                        RectI.pool.free(tile_rect);
+                                        return true;
+                                    }
+                                }
+                                RectI.pool.free(tile_rect);
+                            }
+                        }
+                    }
+
                     // check for drag handle touch
                     for (var handle : active_level.drag_handles.values()) {
                         var contains_touch = (handle.dir == center)
@@ -212,6 +268,8 @@ public class WorldInput extends InputAdapter {
         }
 
         if (button == Buttons.LEFT) {
+            painting = false;
+
             // let go of drag handle
             if (active_handle != null) {
                 active_handle = null;
@@ -231,6 +289,8 @@ public class WorldInput extends InputAdapter {
                     }
 
                     // if this level has a tile layer, regenerate it based on the new size
+                    // TODO: at the moment this just blows away existing tiles,
+                    //  it should try to keep them if possible, otherwise prompt for destructive edit
                     var tile_layer = (Layer.Tiles) active_level.get_layer(Layer.Tiles.class);
                     if (tile_layer != null) {
                         tile_layer.regenerate();

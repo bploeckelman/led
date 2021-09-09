@@ -55,14 +55,14 @@ public class TilesetInput extends InputAdapter {
     private final Array<RectI> tiles = new Array<>();
 
     // TODO: change to an array to support multi-select
-    public int active_tile_id;
+    public int selected_tile_id;
 
     public TilesetInput(World world, OrthographicCamera camera) {
         this.world = world;
         this.camera = camera;
         this.tileset = null;
         this.visible = true;
-        var size = 400;
+        var size = 300;
         var header_h = 50;
         this.rect.set(200, (int) camera.viewportHeight - size, size, size);
         this.header_rect.set(rect.x, rect.y + rect.h - header_h, size, header_h);
@@ -71,7 +71,7 @@ public class TilesetInput extends InputAdapter {
         this.resize_handle.set(rect.x + rect.w - handle_size, rect.y, handle_size, handle_size);
         this.dragging = false;
         this.resizing = false;
-        this.active_tile_id = -1;
+        this.selected_tile_id = -1;
     }
 
     public void update(float dt) {
@@ -219,7 +219,7 @@ public class TilesetInput extends InputAdapter {
                     if (tile.contains(mouse_world)) {
                         drawer.rectangle(tile.x, tile.y, tile.w, tile.h, highlight, 4);
                     }
-                    if (active_tile_id == i) {
+                    if (selected_tile_id == i) {
                         drawer.rectangle(tile.x, tile.y, tile.w, tile.h, selected, 6);
                     }
                 }
@@ -243,6 +243,11 @@ public class TilesetInput extends InputAdapter {
         touch_world.set(touch_screen);
         camera.unproject(touch_world);
 
+        // throw away the touch if it's out of bounds
+        if (!rect.contains(touch_world.x, touch_world.y)) {
+            return false;
+        }
+
         if (button == Input.Buttons.LEFT) {
             // touched in header, start a window drag operation
             if (header_rect.contains(touch_world)) {
@@ -260,7 +265,8 @@ public class TilesetInput extends InputAdapter {
             for (int i = 0; i < tiles.size; i++) {
                 var tile_rect = tiles.get(i);
                 if (tile_rect.contains(touch_world)) {
-                    active_tile_id = i;
+                    selected_tile_id = i;
+                    return true;
                 }
             }
         }
