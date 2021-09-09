@@ -104,9 +104,9 @@ public class TilesetInput extends InputAdapter {
                 rect.y = (int) MathUtils.clamp(rect.y, 0, camera.viewportHeight - rect.h);
 
                 // update child window regions
-                header_rect.setPosition(rect.x, rect.y + rect.h - header_rect.h);
+                header_rect.setPosition(rect.x, rect.top() - header_rect.h);
                 tiles_rect.setPosition(rect.x, rect.y);
-                resize_handle.setPosition(rect.x + rect.w - resize_handle.w, rect.y);
+                resize_handle.setPosition(rect.right() - resize_handle.w, rect.y);
             }
             else if (resizing) {
                 int x = (int) mouse_world.x;
@@ -144,7 +144,7 @@ public class TilesetInput extends InputAdapter {
                 // update child window regions
                 header_rect.setSize(rect.w, header_rect.h);
                 tiles_rect.set(rect.x, rect.y, rect.w, rect.h - header_rect.h);
-                resize_handle.setPosition(rect.x + rect.w - resize_handle.w, rect.y);
+                resize_handle.setPosition(rect.right() - resize_handle.w, rect.y);
             }
         }
     }
