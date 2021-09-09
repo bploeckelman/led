@@ -86,8 +86,8 @@ public class Main extends ApplicationAdapter {
         Inputs.init(world_input, camera_input, tileset_input);
 
         var input_mux = new InputMultiplexer(
-                  imgui_input
-                , tileset_input
+                  tileset_input
+                , imgui_input
                 , camera_input
                 , camera_input_gesture
                 , world_input
