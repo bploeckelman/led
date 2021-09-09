@@ -269,6 +269,11 @@ public class TilesetInput extends InputAdapter {
                     return true;
                 }
             }
+
+            // otherwise if we touched in the tile viewport bounds, that shouldn't pass to the next input processor
+            if (tiles_rect.contains(touch_world)) {
+                return true;
+            }
         }
         else if (button == Input.Buttons.MIDDLE) {
             tile_scale = default_tile_scale;
