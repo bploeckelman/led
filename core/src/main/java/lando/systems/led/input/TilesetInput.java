@@ -25,7 +25,9 @@ public class TilesetInput extends InputAdapter {
     final Vector3 touch_screen;
     final Vector3 touch_world;
 
-    private final RectI window_rect;
+    private final RectI rect;
+    private final RectI header_rect;
+    private final RectI tiles_rect;
     private final Color background = new Color(0.2f, 0.3f, 0.2f, 0.5f);
     private final Color outline = new Color(Color.SKY);
     private final Rectangle scissors = new Rectangle();
@@ -39,7 +41,10 @@ public class TilesetInput extends InputAdapter {
         this.tileset = null;
         this.visible = true;
         var size = 400;
-        this.window_rect = RectI.of(200, (int) camera.viewportHeight - size, size, size);
+        var header_h = 50;
+        this.rect = RectI.of(200, (int) camera.viewportHeight - size, size, size);
+        this.header_rect = RectI.of(rect.x, rect.y + rect.h - header_h, size, header_h);
+        this.tiles_rect = RectI.of(rect.x, rect.y, rect.w, rect.h - header_rect.h);
     }
 
     public void update(float dt) {
@@ -70,42 +75,45 @@ public class TilesetInput extends InputAdapter {
         var font = Assets.font;
         var layout = Assets.layout;
         var margin = 8;
-        var header_h = 50;
 
-        drawer.filledRectangle(window_rect.x, window_rect.y, window_rect.w, window_rect.h, background);
-        drawer.filledRectangle(window_rect.x, window_rect.top() - header_h, window_rect.w, header_h, Color.DARK_GRAY);
-        drawer.rectangle(window_rect.x, window_rect.y, window_rect.w, window_rect.h, outline);
+        // draw backgrounds
+        {
+            // header
+            drawer.filledRectangle(header_rect.x, header_rect.top() - header_rect.h, header_rect.w, header_rect.h, Color.DARK_GRAY);
+            drawer.rectangle(header_rect.x, header_rect.y, header_rect.w, header_rect.h, outline);
+
+            // tiles
+            drawer.filledRectangle(tiles_rect.x, tiles_rect.y, tiles_rect.w, tiles_rect.h, background);
+            drawer.rectangle(tiles_rect.x, tiles_rect.y, tiles_rect.w, tiles_rect.h, outline);
+        }
 
         if (tileset != null) {
-            // TODO: technically only the tile grid needs to be scissored,
-            //   but if it's only done around the grid then the fonts get clipped out
-            //   not sure how to handle this once pan/zoom is wired up for the tile grid
-            clip_bounds.set(window_rect.x, window_rect.y, window_rect.w, window_rect.h);
+            // draw header
+            var line_spacing = 4;
+            var prev_scale_x = font.getData().scaleX;
+            var prev_scale_y = font.getData().scaleY;
+            font.getData().setScale(1f);
+            {
+                var left = header_rect.left() + margin;
+                var line = header_rect.top() - margin;
+                var width = header_rect.w - 2 * margin;
+                layout.setText(font, tileset.filename, Color.LIGHT_GRAY, width, Align.left, false);
+                font.draw(batch, layout, left, line);
+                line -= layout.height + line_spacing;
+
+                layout.setText(font, String.format("grid size: %d", tileset.grid_size), Color.LIGHT_GRAY, width, Align.left, false);
+                font.draw(batch, layout, left, line);
+                line -= layout.height + line_spacing;
+            }
+            font.getData().setScale(prev_scale_x, prev_scale_y);
+            batch.flush();
+
+            // draw tiles viewport
+            var tile_viewport_x = tiles_rect.left() + margin;
+            var tile_viewport_y = tiles_rect.top() - margin;
+            clip_bounds.set(tiles_rect.x, tiles_rect.y, tiles_rect.w, tiles_rect.h);
             ScissorStack.calculateScissors(camera, batch.getTransformMatrix(), clip_bounds, scissors);
             if (ScissorStack.pushScissors(scissors)) {
-                var tile_viewport_x = window_rect.left() + margin;
-                var tile_viewport_y = window_rect.top() - margin;
-
-                var line_spacing = 4;
-                var prev_scale_x = font.getData().scaleX;
-                var prev_scale_y = font.getData().scaleY;
-                font.getData().setScale(1f);
-                {
-                    var left = window_rect.left() + margin;
-                    var line = window_rect.top() - margin;
-                    var width = window_rect.w - 2 * margin;
-                    layout.setText(font, tileset.filename, Color.LIGHT_GRAY, width, Align.left, false);
-                    font.draw(batch, layout, left, line);
-                    line -= layout.height + line_spacing;
-
-                    layout.setText(font, String.format("grid size: %d", tileset.grid_size), Color.LIGHT_GRAY, width, Align.left, false);
-                    font.draw(batch, layout, left, line);
-                    line -= layout.height + line_spacing;
-
-                    tile_viewport_y = line - line_spacing;
-                }
-                font.getData().setScale(prev_scale_x, prev_scale_y);
-
                 var scale = 3;
                 var grid = tileset.grid_size;
                 var size = grid * scale;
