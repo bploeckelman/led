@@ -11,6 +11,7 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.utils.ScissorStack;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Array;
 import lando.systems.led.Assets;
 import lando.systems.led.utils.Point;
 import lando.systems.led.utils.RectI;
@@ -44,11 +45,17 @@ public class TilesetInput extends InputAdapter {
     private final Color outline         = new Color(Color.SKY);
     private final Color handle          = new Color(0x97defbff);
     private final Color handle_dim      = new Color(0x87ceebcc);
+    private final Color highlight       = new Color(0x32cd32dd);
+    private final Color selected        = new Color(0xff341cdd);
     private final Rectangle scissors    = new Rectangle();
     private final Rectangle clip_bounds = new Rectangle();
     private boolean dragging;
     private boolean resizing;
     private int tile_scale = default_tile_scale;
+    private final Array<RectI> tiles = new Array<>();
+
+    // TODO: change to an array to support multi-select
+    public int active_tile_id;
 
     public TilesetInput(World world, OrthographicCamera camera) {
         this.world = world;
@@ -64,6 +71,7 @@ public class TilesetInput extends InputAdapter {
         this.resize_handle.set(rect.x + rect.w - handle_size, rect.y, handle_size, handle_size);
         this.dragging = false;
         this.resizing = false;
+        this.active_tile_id = -1;
     }
 
     public void update(float dt) {
@@ -82,6 +90,7 @@ public class TilesetInput extends InputAdapter {
                     tileset = tileset_attrib.tileset;
                     has_tileset = true;
                     visible = true;
+                    regenerate_tiles();
                 }
             }
         }
@@ -89,6 +98,7 @@ public class TilesetInput extends InputAdapter {
         if (!has_tileset) {
             tileset = null;
             visible = false;
+            regenerate_tiles();
         }
 
         if (visible) {
@@ -107,6 +117,8 @@ public class TilesetInput extends InputAdapter {
                 header_rect.setPosition(rect.x, rect.top() - header_rect.h);
                 tiles_rect.setPosition(rect.x, rect.y);
                 resize_handle.setPosition(rect.right() - resize_handle.w, rect.y);
+
+                update_tile_rects();
             }
             else if (resizing) {
                 int x = (int) mouse_world.x;
@@ -197,20 +209,18 @@ public class TilesetInput extends InputAdapter {
             }
 
             // draw tiles viewport
-            var tile_viewport_x = tiles_rect.left() + margin;
-            var tile_viewport_y = tiles_rect.top() - margin;
             clip_bounds.set(tiles_rect.x, tiles_rect.y, tiles_rect.w, tiles_rect.h);
             ScissorStack.calculateScissors(camera, batch.getTransformMatrix(), clip_bounds, scissors);
             if (ScissorStack.pushScissors(scissors)) {
-                var grid = tileset.grid_size;
-                var size = grid * tile_scale;
-                var tile_spacing = 4;
-                for (int y = 0; y < tileset.rows; y++) {
-                    for (int x = 0; x < tileset.cols; x++) {
-                        var tile = tileset.get(x, y);
-                        var tx = tile_viewport_x + x * size + x * tile_spacing;
-                        var ty = tile_viewport_y - (y + 1) * (size + tile_spacing);
-                        batch.draw(tile, tx, ty, size, size);
+                for (int i = 0; i < tiles.size; i++) {
+                    var texture = tileset.get(i);
+                    var tile = tiles.get(i);
+                    batch.draw(texture, tile.x, tile.y, tile.w, tile.h);
+                    if (tile.contains(mouse_world)) {
+                        drawer.rectangle(tile.x, tile.y, tile.w, tile.h, highlight, 4);
+                    }
+                    if (active_tile_id == i) {
+                        drawer.rectangle(tile.x, tile.y, tile.w, tile.h, selected, 6);
                     }
                 }
 
@@ -220,7 +230,7 @@ public class TilesetInput extends InputAdapter {
         }
 
         {
-            // resize handle
+            // draw resize handle
             var handle_color = resize_handle.contains(mouse_world) ? handle : handle_dim;
             drawer.filledRectangle(resize_handle.x, resize_handle.y, resize_handle.w, resize_handle.h, handle_color);
             drawer.rectangle(resize_handle.x, resize_handle.y, resize_handle.w, resize_handle.h, outline);
@@ -246,10 +256,18 @@ public class TilesetInput extends InputAdapter {
                 touch_delta.set(resize_handle.x - (int) touch_world.x, resize_handle.y - (int) touch_world.y);
                 return true;
             }
-            // TODO: if touched in tile rect, initiate a pan for just the tile rect contents
+            // touched a tile, set it as active
+            for (int i = 0; i < tiles.size; i++) {
+                var tile_rect = tiles.get(i);
+                if (tile_rect.contains(touch_world)) {
+                    active_tile_id = i;
+                }
+            }
         }
-        if (button == Input.Buttons.MIDDLE) {
+        else if (button == Input.Buttons.MIDDLE) {
             tile_scale = default_tile_scale;
+            update_tile_rects();
+            // TODO: if touched in tile rect, initiate a pan for just the tile rect contents
         }
 
         return false;
@@ -270,9 +288,41 @@ public class TilesetInput extends InputAdapter {
             // TODO: what axis to use, take amount into account or just adjust per call?
             tile_scale -= Math.signum(amountY);
             tile_scale = MathUtils.clamp(tile_scale, min_tile_scale, max_tile_scale);
+            update_tile_rects();
             return true;
         }
         return false;
+    }
+
+    private void regenerate_tiles() {
+        tiles.clear();
+        if (tileset == null) return;
+
+        int num_tiles = tileset.rows * tileset.cols;
+        for (int i = 0; i < num_tiles; i++) {
+            tiles.add(RectI.zero());
+        }
+
+        update_tile_rects();
+    }
+
+    private void update_tile_rects() {
+        if (tileset == null) return;
+
+        var margin = 5;
+        var tile_spacing = 4;
+        var tile_viewport_x = tiles_rect.left() + margin;
+        var tile_viewport_y = tiles_rect.top()  - margin;
+        var size = tileset.grid_size * tile_scale;
+
+        for (int y = 0, tile_id = 0; y < tileset.rows; y++) {
+            for (int x = 0; x < tileset.cols; x++) {
+                var tx = tile_viewport_x + x * size + x * tile_spacing;
+                var ty = tile_viewport_y - (y + 1) * (size + tile_spacing);
+                tiles.get(tile_id).set(tx, ty, size, size);
+                tile_id++;
+            }
+        }
     }
 
 }
