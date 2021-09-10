@@ -85,6 +85,8 @@ public class Main extends ApplicationAdapter {
         imgui_input = new ImGuiGdxInput();
         Inputs.init(world_input, camera_input, tileset_input);
 
+        // NOTE: apparently ImGuiGdxInput doesn't respect the input mux bubbling order?
+        //  touches that are eaten by TilesetInput still trigger button presses and such in ImGuiGdxInput
         var input_mux = new InputMultiplexer(
                   tileset_input
                 , imgui_input

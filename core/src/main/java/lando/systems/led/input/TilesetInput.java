@@ -24,11 +24,13 @@ import space.earlygrey.shapedrawer.ShapeDrawer;
 public class TilesetInput extends InputAdapter {
 
     private static final int default_tile_scale = 4;
-    private static final int min_tile_scale = 1;
+    private static final int min_tile_scale = 2;
     private static final int max_tile_scale = 100;
+    private static final int sidebar_right = 200;
 
     public boolean visible;
     public Tileset tileset;
+    // TODO: this needs to be a matrix of ids or something so we know how to splat it onto a tile layer
     public final IntSet selected_tiles = new IntSet();
 
     final World world;
@@ -43,6 +45,8 @@ public class TilesetInput extends InputAdapter {
     private final RectI tiles_rect      = RectI.zero();
     private final RectI resize_handle   = RectI.zero();
     private final Point touch_delta     = Point.zero();
+    private final Point tiles_pan       = Point.zero();
+    private final Point tiles_pan_start = Point.zero();
     private final Color background      = new Color(0.2f, 0.3f, 0.2f, 0.5f);
     private final Color outline         = new Color(Color.SKY);
     private final Color handle          = new Color(0x97defbff);
@@ -55,6 +59,7 @@ public class TilesetInput extends InputAdapter {
     private int tile_scale = default_tile_scale;
     private boolean dragging;
     private boolean resizing;
+    private boolean panning;
 
     public TilesetInput(World world, OrthographicCamera camera) {
         this.world = world;
@@ -63,13 +68,14 @@ public class TilesetInput extends InputAdapter {
         this.visible = true;
         var size = 300;
         var header_h = 50;
-        this.rect.set(0, (int) camera.viewportHeight - size, size, size);
+        this.rect.set(sidebar_right, (int) camera.viewportHeight - size, size, size);
         this.header_rect.set(rect.x, rect.y + rect.h - header_h, size, header_h);
         this.tiles_rect.set(rect.x, rect.y, rect.w, rect.h - header_rect.h);
         var handle_size = 20;
         this.resize_handle.set(rect.x + rect.w - handle_size, rect.y, handle_size, handle_size);
         this.dragging = false;
         this.resizing = false;
+        this.panning = false;
     }
 
     public void update(float dt) {
@@ -108,8 +114,9 @@ public class TilesetInput extends InputAdapter {
                 rect.setPosition(x + touch_delta.x, y + touch_delta.y);
 
                 // keep window on screen
-                rect.x = (int) MathUtils.clamp(rect.x, 0, camera.viewportWidth - rect.w);
-                rect.y = (int) MathUtils.clamp(rect.y, 0, camera.viewportHeight - rect.h);
+                float min = sidebar_right; // if we overlap the sidebar imgui reacts to input that it shouldn't react to T_T
+                rect.x = (int) MathUtils.clamp(rect.x, min, camera.viewportWidth - rect.w);
+                rect.y = (int) MathUtils.clamp(rect.y, min, camera.viewportHeight - rect.h);
 
                 // update child window regions
                 header_rect.setPosition(rect.x, rect.top() - header_rect.h);
@@ -155,6 +162,17 @@ public class TilesetInput extends InputAdapter {
                 header_rect.setSize(rect.w, header_rect.h);
                 tiles_rect.set(rect.x, rect.y, rect.w, rect.h - header_rect.h);
                 resize_handle.setPosition(rect.right() - resize_handle.w, rect.y);
+            }
+            else if (panning) {
+                int x = (int) mouse_world.x;
+                int y = (int) mouse_world.y;
+
+                int dx = x - (int) touch_world.x;
+                int dy = y - (int) touch_world.y;
+
+                tiles_pan.set(tiles_pan_start.x + dx, tiles_pan_start.y + dy);
+
+                update_tile_rects();
             }
         }
     }
@@ -254,29 +272,34 @@ public class TilesetInput extends InputAdapter {
                 return true;
             }
             // touched in resize handle, start a window resize operation
-            if (resize_handle.contains(touch_world)) {
+            else if (resize_handle.contains(touch_world)) {
                 resizing = true;
                 touch_delta.set(resize_handle.x - (int) touch_world.x, resize_handle.y - (int) touch_world.y);
                 return true;
             }
-            // touched a tile, set it as active
-            for (int i = 0; i < tiles.size; i++) {
-                var tile_rect = tiles.get(i);
-                if (tile_rect.contains(touch_world)) {
-                    selected_tiles.add(i);
-                    return true;
+            // touched in tile viewport
+            else if (tiles_rect.contains(touch_world)) {
+                // touched a tile, toggle it's selection status
+                for (int i = 0; i < tiles.size; i++) {
+                    var tile_rect = tiles.get(i);
+                    if (tile_rect.contains(touch_world)) {
+                        if (selected_tiles.contains(i)) {
+                            selected_tiles.remove(i);
+                        } else {
+                            selected_tiles.add(i);
+                        }
+                        return true;
+                    }
                 }
-            }
-
-            // otherwise if we touched in the tile viewport bounds, that shouldn't pass to the next input processor
-            if (tiles_rect.contains(touch_world)) {
+                // if we touched in the tile viewport bounds, that shouldn't pass to the next input processor
                 return true;
             }
         }
         else if (button == Input.Buttons.MIDDLE) {
-            tile_scale = default_tile_scale;
+            panning = true;
+            tiles_pan_start.set(tiles_pan);
             update_tile_rects();
-            // TODO: if touched in tile rect, initiate a pan for just the tile rect contents
+            return true;
         }
 
         return false;
@@ -287,6 +310,9 @@ public class TilesetInput extends InputAdapter {
         if (button == Input.Buttons.LEFT) {
             dragging = false;
             resizing = false;
+        }
+        else if (button == Input.Buttons.MIDDLE) {
+            panning = false;
         }
         return false;
     }
@@ -320,8 +346,8 @@ public class TilesetInput extends InputAdapter {
 
         var margin = 5;
         var tile_spacing = 4;
-        var tile_viewport_x = tiles_rect.left() + margin;
-        var tile_viewport_y = tiles_rect.top()  - margin;
+        var tile_viewport_x = tiles_pan.x + tiles_rect.left() + margin;
+        var tile_viewport_y = tiles_pan.y + tiles_rect.top()  - margin;
         var size = tileset.grid_size * tile_scale;
 
         for (int y = 0, tile_id = 0; y < tileset.rows; y++) {
