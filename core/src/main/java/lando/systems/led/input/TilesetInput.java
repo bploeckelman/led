@@ -12,6 +12,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.utils.ScissorStack;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.IntSet;
 import lando.systems.led.Assets;
 import lando.systems.led.utils.Point;
 import lando.systems.led.utils.RectI;
@@ -28,6 +29,7 @@ public class TilesetInput extends InputAdapter {
 
     public boolean visible;
     public Tileset tileset;
+    public final IntSet selected_tiles = new IntSet();
 
     final World world;
     final OrthographicCamera camera;
@@ -49,13 +51,10 @@ public class TilesetInput extends InputAdapter {
     private final Color selected        = new Color(0xff341cdd);
     private final Rectangle scissors    = new Rectangle();
     private final Rectangle clip_bounds = new Rectangle();
+    private final Array<RectI> tiles = new Array<>();
+    private int tile_scale = default_tile_scale;
     private boolean dragging;
     private boolean resizing;
-    private int tile_scale = default_tile_scale;
-    private final Array<RectI> tiles = new Array<>();
-
-    // TODO: change to an array to support multi-select
-    public int selected_tile_id;
 
     public TilesetInput(World world, OrthographicCamera camera) {
         this.world = world;
@@ -64,14 +63,13 @@ public class TilesetInput extends InputAdapter {
         this.visible = true;
         var size = 300;
         var header_h = 50;
-        this.rect.set(200, (int) camera.viewportHeight - size, size, size);
+        this.rect.set(0, (int) camera.viewportHeight - size, size, size);
         this.header_rect.set(rect.x, rect.y + rect.h - header_h, size, header_h);
         this.tiles_rect.set(rect.x, rect.y, rect.w, rect.h - header_rect.h);
         var handle_size = 20;
         this.resize_handle.set(rect.x + rect.w - handle_size, rect.y, handle_size, handle_size);
         this.dragging = false;
         this.resizing = false;
-        this.selected_tile_id = -1;
     }
 
     public void update(float dt) {
@@ -219,7 +217,7 @@ public class TilesetInput extends InputAdapter {
                     if (tile.contains(mouse_world)) {
                         drawer.rectangle(tile.x, tile.y, tile.w, tile.h, highlight, 4);
                     }
-                    if (selected_tile_id == i) {
+                    if (selected_tiles.contains(i)) {
                         drawer.rectangle(tile.x, tile.y, tile.w, tile.h, selected, 6);
                     }
                 }
@@ -265,7 +263,7 @@ public class TilesetInput extends InputAdapter {
             for (int i = 0; i < tiles.size; i++) {
                 var tile_rect = tiles.get(i);
                 if (tile_rect.contains(touch_world)) {
-                    selected_tile_id = i;
+                    selected_tiles.add(i);
                     return true;
                 }
             }

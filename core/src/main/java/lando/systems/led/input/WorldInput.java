@@ -1,6 +1,5 @@
 package lando.systems.led.input;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputAdapter;
@@ -104,8 +103,9 @@ public class WorldInput extends InputAdapter {
 
             // check for tile layer touch
             if (painting && mouse_buttons.left_mouse_down) {
+                var selected_tiles = Inputs.tileset_input.selected_tiles;
                 var tiles_layer = active_level.get_layer(Layer.Tiles.class);
-                if (tiles_layer != null && Inputs.tileset_input.selected_tile_id != -1) {
+                if (tiles_layer != null && !selected_tiles.isEmpty()) {
                     var tile_data = (Layer.TileData) tiles_layer.data;
                     var grid_attrib = tiles_layer.get_attribute(Layer.GridAttrib.class);
                     if (tile_data.visible && grid_attrib != null) {
@@ -118,7 +118,8 @@ public class WorldInput extends InputAdapter {
                                         active_level.pixel_bounds.y + tile.grid.y * grid_size,
                                         grid_size, grid_size);
                                 if (tile_rect.contains(Inputs.mouse_world)) {
-                                    tile.tileset_index = Inputs.tileset_input.selected_tile_id;
+                                    // TODO: splat all selected tiles at the mouse position
+                                    tile.tileset_index = selected_tiles.first();
                                     break;
                                 }
                             }
@@ -204,7 +205,7 @@ public class WorldInput extends InputAdapter {
                     //   could tighten it up a bit, but the flag is set here
                     {
                         var tiles_layer = active_level.get_layer(Layer.Tiles.class);
-                        if (tiles_layer != null && Inputs.tileset_input.selected_tile_id != -1) {
+                        if (tiles_layer != null && !Inputs.tileset_input.selected_tiles.isEmpty()) {
                             var tile_data = (Layer.TileData) tiles_layer.data;
                             var grid_attrib = tiles_layer.get_attribute(Layer.GridAttrib.class);
                             if (tile_data.visible && grid_attrib != null) {
