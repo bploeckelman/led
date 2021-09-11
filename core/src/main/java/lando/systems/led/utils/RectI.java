@@ -60,13 +60,6 @@ public class RectI implements Pool.Poolable {
         return this;
     }
 
-    public boolean overlaps(RectI other) {
-        return x < other.x + other.w
-            && other.x < x + w
-            && y < other.y + other.h
-            && other.y < y + h;
-    }
-
     public int left()   { return x; }
     public int right()  { return x + w; }
     public int bottom() { return y; }
@@ -95,6 +88,20 @@ public class RectI implements Pool.Poolable {
 
     public boolean contains(Vector3 point) {
         return contains(point.x, point.y);
+    }
+
+    public boolean contains(RectI other) {
+        return left()   <= other.left()
+            && bottom() <= other.bottom()
+            && right()  >= other.right()
+            && top()    >= other.top();
+    }
+
+    public boolean overlaps(RectI other) {
+        return left()   < other.right()
+            && bottom() < other.top()
+            && right()  > other.left()
+            && top()    > other.bottom();
     }
 
 }

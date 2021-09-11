@@ -200,6 +200,14 @@ public class Level {
         return null;
     }
 
+    public <T extends Layer.Attribute, R extends Layer> T get_layer_attribute(Class<R> layer_clazz, Class<T> attrib_clazz) {
+        R layer = get_layer(layer_clazz);
+        if (layer != null) {
+            return layer.get_attribute(attrib_clazz);
+        }
+        return null;
+    }
+
     public class DragHandle {
         public enum Dir { left, right, up, down, center }
 

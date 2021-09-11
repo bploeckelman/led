@@ -30,7 +30,7 @@ public class TilesetInput extends InputAdapter {
 
     public boolean visible;
     public Tileset tileset;
-    // TODO: this needs to be a matrix of ids or something so we know how to splat it onto a tile layer
+
     public final IntSet selected_tiles = new IntSet();
 
     final World world;
@@ -44,6 +44,7 @@ public class TilesetInput extends InputAdapter {
     private final RectI header_rect     = RectI.zero();
     private final RectI tiles_rect      = RectI.zero();
     private final RectI resize_handle   = RectI.zero();
+    private final RectI select_rect     = RectI.zero();
     private final Point touch_delta     = Point.zero();
     private final Point tiles_pan       = Point.zero();
     private final Point tiles_pan_start = Point.zero();
@@ -60,6 +61,7 @@ public class TilesetInput extends InputAdapter {
     private boolean dragging;
     private boolean resizing;
     private boolean panning;
+    private boolean selecting;
 
     public TilesetInput(World world, OrthographicCamera camera) {
         this.world = world;
@@ -76,6 +78,7 @@ public class TilesetInput extends InputAdapter {
         this.dragging = false;
         this.resizing = false;
         this.panning = false;
+        this.selecting = false;
     }
 
     public void update(float dt) {
@@ -85,17 +88,18 @@ public class TilesetInput extends InputAdapter {
 
         var has_tileset = false;
 
+        // get the tile layer tileset attribute, if one exists
+        // and regenerate tiles if it's a new one
         var level = world.get_active_level();
         if (level != null) {
-            var layer = level.get_layer(Layer.Tiles.class);
-            if (layer != null) {
-                var tileset_attrib = layer.get_attribute(Layer.TilesetAttrib.class);
-                if (tileset_attrib != null) {
+            var tileset_attrib = level.get_layer_attribute(Layer.Tiles.class, Layer.TilesetAttrib.class);
+            if (tileset_attrib != null) {
+                if (tileset != tileset_attrib.tileset) {
                     tileset = tileset_attrib.tileset;
-                    has_tileset = true;
-                    visible = true;
                     regenerate_tiles();
                 }
+                has_tileset = true;
+                visible = true;
             }
         }
 
@@ -125,6 +129,7 @@ public class TilesetInput extends InputAdapter {
 
                 update_tile_rects();
             }
+            // handle window resize (via drag on resize handle)
             else if (resizing) {
                 int x = (int) mouse_world.x;
                 int y = (int) mouse_world.y;
@@ -163,6 +168,7 @@ public class TilesetInput extends InputAdapter {
                 tiles_rect.set(rect.x, rect.y, rect.w, rect.h - header_rect.h);
                 resize_handle.setPosition(rect.right() - resize_handle.w, rect.y);
             }
+            // handle pan for contents of tileset viewport
             else if (panning) {
                 int x = (int) mouse_world.x;
                 int y = (int) mouse_world.y;
@@ -173,6 +179,20 @@ public class TilesetInput extends InputAdapter {
                 tiles_pan.set(tiles_pan_start.x + dx, tiles_pan_start.y + dy);
 
                 update_tile_rects();
+            }
+            // handle dragging a selection region for tiles in the tileset viewport
+            else if (selecting) {
+                int x = (int) mouse_world.x;
+                int y = (int) mouse_world.y;
+
+                // determine size based on drag position
+                int new_w = x - select_rect.x;
+                int new_h = y - select_rect.y;
+
+                // clamp to keep in tileset viewport
+                // TODO
+
+                select_rect.setSize(new_w, new_h);
             }
         }
     }
@@ -233,10 +253,10 @@ public class TilesetInput extends InputAdapter {
                     var tile = tiles.get(i);
                     batch.draw(texture, tile.x, tile.y, tile.w, tile.h);
                     if (tile.contains(mouse_world)) {
-                        drawer.rectangle(tile.x, tile.y, tile.w, tile.h, highlight, 4);
+                        drawer.rectangle(tile.x, tile.y, tile.w, tile.h, highlight, 3);
                     }
                     if (selected_tiles.contains(i)) {
-                        drawer.rectangle(tile.x, tile.y, tile.w, tile.h, selected, 6);
+                        drawer.rectangle(tile.x, tile.y, tile.w, tile.h, selected, 2);
                     }
                 }
 
@@ -250,6 +270,12 @@ public class TilesetInput extends InputAdapter {
             var handle_color = resize_handle.contains(mouse_world) ? handle : handle_dim;
             drawer.filledRectangle(resize_handle.x, resize_handle.y, resize_handle.w, resize_handle.h, handle_color);
             drawer.rectangle(resize_handle.x, resize_handle.y, resize_handle.w, resize_handle.h, outline);
+        }
+
+        // draw select rect
+        if (selecting) {
+            drawer.rectangle(select_rect.x, select_rect.y, select_rect.w, select_rect.h, selected, 2);
+            drawer.rectangle(select_rect.x, select_rect.y, select_rect.w, select_rect.h, Color.ORANGE, 4);
         }
     }
 
@@ -277,21 +303,10 @@ public class TilesetInput extends InputAdapter {
                 touch_delta.set(resize_handle.x - (int) touch_world.x, resize_handle.y - (int) touch_world.y);
                 return true;
             }
-            // touched in tile viewport
+            // touched in tile viewport, start a selection
             else if (tiles_rect.contains(touch_world)) {
-                // touched a tile, toggle it's selection status
-                for (int i = 0; i < tiles.size; i++) {
-                    var tile_rect = tiles.get(i);
-                    if (tile_rect.contains(touch_world)) {
-                        if (selected_tiles.contains(i)) {
-                            selected_tiles.remove(i);
-                        } else {
-                            selected_tiles.add(i);
-                        }
-                        return true;
-                    }
-                }
-                // if we touched in the tile viewport bounds, that shouldn't pass to the next input processor
+                select_rect.set((int) touch_world.x, (int) touch_world.y, 0, 0);
+                selecting = true;
                 return true;
             }
         }
@@ -310,6 +325,35 @@ public class TilesetInput extends InputAdapter {
         if (button == Input.Buttons.LEFT) {
             dragging = false;
             resizing = false;
+
+            if (selecting) {
+                selecting = false;
+                selected_tiles.clear();
+
+                // fixup rect origin to bottom left,
+                int sx = select_rect.x;
+                int sy = select_rect.y;
+                int sw = select_rect.w;
+                int sh = select_rect.h;
+                if (sw < 0) {
+                    sw *= -1;
+                    sx -= sw;
+                }
+                if (sh < 0) {
+                    sh *= -1;
+                    sy -= sh;
+                }
+                select_rect.set(sx, sy, sw, sh);
+
+                // figure out which tiles are in the select_rect and add them to the selected tiles list
+                for (int id = 0; id < tiles.size; id++) {
+                    var tile = tiles.get(id);
+                    if (select_rect.overlaps(tile)) {
+                        selected_tiles.add(id);
+                    }
+                }
+                select_rect.set(0, 0, 0, 0);
+            }
         }
         else if (button == Input.Buttons.MIDDLE) {
             panning = false;
