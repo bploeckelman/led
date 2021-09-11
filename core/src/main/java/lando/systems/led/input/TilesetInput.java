@@ -190,7 +190,8 @@ public class TilesetInput extends InputAdapter {
                 int new_h = y - select_rect.y;
 
                 // clamp to keep in tileset viewport
-                // TODO
+                new_w = MathUtils.clamp(select_rect.x + new_w, tiles_rect.left(), tiles_rect.right()) - select_rect.x;
+                new_h = MathUtils.clamp(select_rect.y + new_h, tiles_rect.bottom(), tiles_rect.top()) - select_rect.y;
 
                 select_rect.setSize(new_w, new_h);
             }
