@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.input.GestureDetector;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.github.xpenatan.imgui.ImGui;
@@ -184,6 +185,37 @@ public class Main extends ApplicationAdapter {
                     var radius = 3;
                     var pos = world_input.new_level_pos;
                     drawer.filledCircle(pos.x, pos.y, radius, Color.LIME);
+                }
+
+                // it's a little silly to do this all inline here
+                var active_level = world.get_active_level();
+                if (active_level != null) {
+                    var tile_layer = active_level.get_layer(Layer.Tiles.class);
+                    var has_tile_layer = tile_layer != null;
+                    var has_selected_tiles = !tileset_input.selected_tiles.isEmpty();
+                    var paint_tiles = has_selected_tiles && has_tile_layer;
+                    if (paint_tiles) {
+                        var tileset = tile_layer.get_attribute(Layer.TilesetAttrib.class).tileset;
+                        var grid_size = tile_layer.get_attribute(Layer.GridAttrib.class).size;
+
+                        // round mouse position to grid boundaries in world space relative to the active level
+                        var level_x = active_level.pixel_bounds.x;
+                        var level_y = active_level.pixel_bounds.y;
+                        var grid_x = MathUtils.floor((Inputs.mouse_world.x - level_x) / grid_size);
+                        var grid_y = MathUtils.floor((Inputs.mouse_world.y - level_y) / grid_size);
+                        var x = level_x + grid_x * grid_size;
+                        var y = level_y + grid_y * grid_size;
+
+                        // draw selected tiles in world space, clamped to grid boundaries
+                        for (int i = 0; i < tileset_input.selected_tiles.size; i++) {
+                            var selected_tile_id = tileset_input.selected_tiles.get(i);
+                            var ix = selected_tile_id % tileset.cols;
+                            var iy = selected_tile_id / tileset.cols;
+                            batch.setColor(1f, 1f, 1f, 0.5f);
+                            batch.draw(tileset.get(selected_tile_id), x + ix * grid_size, y - iy * grid_size, grid_size, grid_size);
+                            batch.setColor(Color.WHITE);
+                        }
+                    }
                 }
             }
         }

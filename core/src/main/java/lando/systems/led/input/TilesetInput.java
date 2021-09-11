@@ -12,7 +12,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.utils.ScissorStack;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.IntSet;
+import com.badlogic.gdx.utils.IntArray;
 import lando.systems.led.Assets;
 import lando.systems.led.utils.Point;
 import lando.systems.led.utils.RectI;
@@ -31,7 +31,7 @@ public class TilesetInput extends InputAdapter {
     public boolean visible;
     public Tileset tileset;
 
-    public final IntSet selected_tiles = new IntSet();
+    public final IntArray selected_tiles = new IntArray();
 
     final World world;
     final OrthographicCamera camera;
