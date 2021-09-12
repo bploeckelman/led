@@ -3,7 +3,10 @@ package lando.systems.led.input;
 import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.github.xpenatan.imgui.ImGui;
 import com.github.xpenatan.imgui.ImGuiString;
@@ -13,6 +16,7 @@ import lando.systems.led.utils.RectI;
 import lando.systems.led.world.Layer;
 import lando.systems.led.world.Level;
 import lando.systems.led.world.World;
+import space.earlygrey.shapedrawer.ShapeDrawer;
 
 import static lando.systems.led.world.Level.DragHandle.Dir.*;
 
@@ -51,10 +55,6 @@ public class WorldInput extends InputAdapter {
         this.active_handle = null;
         this.show_new_level_button = false;
         this.painting = false;
-    }
-
-    public boolean is_showing_new_level_button() {
-        return show_new_level_button;
     }
 
     public void update(float dt) {
@@ -102,6 +102,7 @@ public class WorldInput extends InputAdapter {
             }
 
             // check for tile layer touch
+            // TODO: splat all selected tiles; see render_selected_paint_tiles()
             if (painting && mouse_buttons.left_mouse_down) {
                 var selected_tiles = Inputs.tileset_input.selected_tiles;
                 var tiles_layer = active_level.get_layer(Layer.Tiles.class);
@@ -320,6 +321,49 @@ public class WorldInput extends InputAdapter {
             Inputs.camera_input.center_on_level(world.get_active_level());
         }
         return false;
+    }
+
+    public void render_new_level_button(ShapeDrawer drawer) {
+        if (show_new_level_button) {
+            var radius = 3;
+            var pos = new_level_pos;
+            drawer.filledCircle(pos.x, pos.y, radius, Color.LIME);
+        }
+    }
+
+    public void render_selected_paint_tiles(SpriteBatch batch) {
+        var active_level = world.get_active_level();
+        if (active_level == null) return;
+
+        var selected_tiles = Inputs.tileset_input.selected_tiles;
+        var has_selected_tiles = !selected_tiles.isEmpty();
+
+        var tile_layer = active_level.get_layer(Layer.Tiles.class);
+        var has_tile_layer = tile_layer != null;
+
+        var paint_tiles = has_selected_tiles && has_tile_layer;
+        if (paint_tiles) {
+            var tileset = tile_layer.get_attribute(Layer.TilesetAttrib.class).tileset;
+            var grid_size = tile_layer.get_attribute(Layer.GridAttrib.class).size;
+
+            // round mouse position to grid boundaries in world space relative to the active level
+            var level_x = active_level.pixel_bounds.x;
+            var level_y = active_level.pixel_bounds.y;
+            var grid_x = MathUtils.floor((Inputs.mouse_world.x - level_x) / grid_size);
+            var grid_y = MathUtils.floor((Inputs.mouse_world.y - level_y) / grid_size);
+            var x = level_x + grid_x * grid_size;
+            var y = level_y + grid_y * grid_size;
+
+            // draw selected tiles in world space, clamped to grid boundaries
+            for (int i = 0; i < selected_tiles.size; i++) {
+                var selected_tile_id = selected_tiles.get(i);
+                var ix = selected_tile_id % tileset.cols;
+                var iy = selected_tile_id / tileset.cols;
+                batch.setColor(1f, 1f, 1f, 0.5f);
+                batch.draw(tileset.get(selected_tile_id), x + ix * grid_size, y - iy * grid_size, grid_size, grid_size);
+                batch.setColor(Color.WHITE);
+            }
+        }
     }
 
 }

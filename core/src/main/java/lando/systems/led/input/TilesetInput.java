@@ -317,6 +317,10 @@ public class TilesetInput extends InputAdapter {
             update_tile_rects();
             return true;
         }
+        else if (button == Input.Buttons.RIGHT) {
+            // consume right clicks that happen in bounds also
+            return true;
+        }
 
         return false;
     }
