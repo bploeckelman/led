@@ -129,11 +129,13 @@ public abstract class Layer {
 
     public static class TileData extends Data {
         public boolean visible;
+        public final int cols;
+        public final int rows;
         public final Array<Tile> tiles;
         public TileData(RectI pixel_bounds, GridAttrib grid) {
             this.visible = true;
-            var cols = MathUtils.ceil((float) pixel_bounds.w / grid.size);
-            var rows = MathUtils.ceil((float) pixel_bounds.h / grid.size);
+            this.cols = MathUtils.ceil((float) pixel_bounds.w / grid.size);
+            this.rows = MathUtils.ceil((float) pixel_bounds.h / grid.size);
             this.tiles = new Array<>(cols * rows);
             for (int i = 0; i < cols * rows; i++) {
                 var x = i / rows;
