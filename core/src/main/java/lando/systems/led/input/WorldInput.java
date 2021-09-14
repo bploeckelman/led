@@ -8,6 +8,8 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.IntArray;
 import com.github.xpenatan.imgui.ImGui;
 import com.github.xpenatan.imgui.ImGuiString;
 import lando.systems.led.Assets;
@@ -15,6 +17,7 @@ import lando.systems.led.utils.Point;
 import lando.systems.led.utils.RectI;
 import lando.systems.led.world.Layer;
 import lando.systems.led.world.Level;
+import lando.systems.led.world.Tile;
 import lando.systems.led.world.World;
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
@@ -102,7 +105,6 @@ public class WorldInput extends InputAdapter {
             }
 
             // check for tile layer touch
-            // TODO: splat all selected tiles; see render_selected_paint_tiles()
             if (painting && mouse_buttons.left_mouse_down) {
                 var selected_tiles = Inputs.tileset_input.selected_tiles;
                 var tiles_layer = active_level.get_layer(Layer.Tiles.class);
@@ -119,8 +121,7 @@ public class WorldInput extends InputAdapter {
                                         active_level.pixel_bounds.y + tile.grid.y * grid_size,
                                         grid_size, grid_size);
                                 if (tile_rect.contains(Inputs.mouse_world)) {
-                                    // TODO: splat all selected tiles at the mouse position
-                                    tile.tileset_index = selected_tiles.first();
+                                    splat_tiles_at(tile, tile_data, selected_tiles);
                                     break;
                                 }
                             }
@@ -355,6 +356,7 @@ public class WorldInput extends InputAdapter {
             var y = level_y + grid_y * grid_size;
 
             // draw selected tiles in world space, clamped to grid boundaries
+            // TODO: shift so origin is at mouse pos regardless of where in the tileset the selected tiles are
             for (int i = 0; i < selected_tiles.size; i++) {
                 var selected_tile_id = selected_tiles.get(i);
                 var ix = selected_tile_id % tileset.cols;
@@ -364,6 +366,36 @@ public class WorldInput extends InputAdapter {
                 batch.setColor(Color.WHITE);
             }
         }
+    }
+
+    private void splat_tiles_at(Tile start_tile, Layer.TileData tile_data, IntArray selected_tiles) {
+        var tileset = Inputs.tileset_input.tileset;
+
+        // NOTE: tileset origin is top left, tile layer origin is bottom left
+        //  so have to flip y both here and in for each selected tile
+        int first_tileset_selection_grid_x = selected_tiles.first() % tileset.cols;
+        int first_tileset_selection_grid_y = selected_tiles.first() / tileset.cols;
+        first_tileset_selection_grid_y = tileset.rows - first_tileset_selection_grid_y;
+
+        var tileset_grid = Point.pool.obtain();
+        {
+            for (int i = 0; i < selected_tiles.size; i++) {
+                int selected_tileset_index = selected_tiles.get(i);
+                tileset_grid.x = selected_tileset_index % tileset.cols;
+                tileset_grid.y = selected_tileset_index / tileset.cols;
+                tileset_grid.y = tileset.rows - tileset_grid.y;
+
+                int tile_x = start_tile.grid.x + (tileset_grid.x - first_tileset_selection_grid_x);
+                int tile_y = start_tile.grid.y + (tileset_grid.y - first_tileset_selection_grid_y);
+                var tile_index =  tile_x * tile_data.rows + tile_y;
+
+                if (tile_index >= 0 && tile_index < tile_data.tiles.size) {
+                    var tile = tile_data.tiles.get(tile_index);
+                    tile.tileset_index = selected_tileset_index;
+                }
+            }
+        }
+        Point.pool.free(tileset_grid);
     }
 
 }
