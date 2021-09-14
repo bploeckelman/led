@@ -355,14 +355,21 @@ public class WorldInput extends InputAdapter {
             var x = level_x + grid_x * grid_size;
             var y = level_y + grid_y * grid_size;
 
+            // use the grid position of the first selected tile to shift the selected tile draw pos
+            // so the origin is at mouse pos regardless of where in the tileset the selected tiles are
+            int first_grid_x = selected_tiles.first() % tileset.cols;
+            int first_grid_y = selected_tiles.first() / tileset.cols;
+
             // draw selected tiles in world space, clamped to grid boundaries
-            // TODO: shift so origin is at mouse pos regardless of where in the tileset the selected tiles are
             for (int i = 0; i < selected_tiles.size; i++) {
                 var selected_tile_id = selected_tiles.get(i);
                 var ix = selected_tile_id % tileset.cols;
                 var iy = selected_tile_id / tileset.cols;
                 batch.setColor(1f, 1f, 1f, 0.5f);
-                batch.draw(tileset.get(selected_tile_id), x + ix * grid_size, y - iy * grid_size, grid_size, grid_size);
+                batch.draw(tileset.get(selected_tile_id),
+                        x + ix * grid_size - first_grid_x * grid_size,
+                        y - iy * grid_size + first_grid_y * grid_size,
+                        grid_size, grid_size);
                 batch.setColor(Color.WHITE);
             }
         }
