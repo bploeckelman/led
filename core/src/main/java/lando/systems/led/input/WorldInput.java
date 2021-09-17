@@ -40,6 +40,7 @@ public class WorldInput extends InputAdapter {
     private Level.DragHandle active_handle;
     private Point move_center;
     private boolean painting;
+    private boolean erasing;
 
     static class MouseButtons {
         boolean left_mouse_down;
@@ -58,6 +59,7 @@ public class WorldInput extends InputAdapter {
         this.active_handle = null;
         this.show_new_level_button = false;
         this.painting = false;
+        this.erasing = false;
     }
 
     public void update(float dt) {
@@ -130,6 +132,33 @@ public class WorldInput extends InputAdapter {
                     }
                 }
             }
+
+            // TODO: this is a lot of boilerplate just to see if the current mouse position is on a tile in the current level
+            //       add method: Tile Level.touched_tile(Point world_pos)
+            if (erasing && mouse_buttons.right_mouse_down && Inputs.tileset_input.selected_tiles.isEmpty()) {
+                var tiles_layer = active_level.get_layer(Layer.Tiles.class);
+                if (tiles_layer != null) {
+                    var tile_data = (Layer.TileData) tiles_layer.data;
+                    var grid_attrib = tiles_layer.get_attribute(Layer.GridAttrib.class);
+                    if (tile_data.visible && grid_attrib != null) {
+                        var grid_size = grid_attrib.size;
+                        var tile_rect = RectI.pool.obtain();
+                        {
+                            for (var tile : tile_data.tiles) {
+                                tile_rect.set(
+                                        active_level.pixel_bounds.x + tile.grid.x * grid_size,
+                                        active_level.pixel_bounds.y + tile.grid.y * grid_size,
+                                        grid_size, grid_size);
+                                if (tile_rect.contains(Inputs.mouse_world)) {
+                                    tile.tileset_index = -1;
+                                    break;
+                                }
+                            }
+                        }
+                        RectI.pool.free(tile_rect);
+                    }
+                }
+            }
         }
     }
 
@@ -183,6 +212,38 @@ public class WorldInput extends InputAdapter {
         }
 
         if (button == Buttons.RIGHT) {
+            // TODO: how to determine if we want a new level or we want to erase?
+            var active_level = world.get_active_level();
+            if (active_level != null) {
+                // check for tile layer touch to draw tiles
+                //   also done in update() to handle drag painting,
+                //   could tighten it up a bit, but the flag is set here
+                {
+                    var tiles_layer = active_level.get_layer(Layer.Tiles.class);
+                    if (tiles_layer != null && Inputs.tileset_input.selected_tiles.isEmpty()) {
+                        var tile_data = (Layer.TileData) tiles_layer.data;
+                        var grid_attrib = tiles_layer.get_attribute(Layer.GridAttrib.class);
+                        if (tile_data.visible && grid_attrib != null) {
+                            var grid_size = grid_attrib.size;
+                            var tile_rect = RectI.pool.obtain();
+                            for (var tile : tile_data.tiles) {
+                                tile_rect.set(
+                                        active_level.pixel_bounds.x + tile.grid.x * grid_size,
+                                        active_level.pixel_bounds.y + tile.grid.y * grid_size,
+                                        grid_size, grid_size);
+                                if (tile_rect.contains(touch_world)) {
+                                    erasing = true;
+                                    RectI.pool.free(tile_rect);
+                                    return true;
+                                }
+                            }
+                            RectI.pool.free(tile_rect);
+                        }
+                    }
+                }
+            }
+
+            // making it this far means we aren't erasing, so show the new level button instead
             show_new_level_button = !show_new_level_button;
 
             if (show_new_level_button) {
@@ -190,6 +251,7 @@ public class WorldInput extends InputAdapter {
             } else {
                 hide_new_level_button();
             }
+
             return true;
         }
         else if (button == Buttons.MIDDLE) {
@@ -302,6 +364,9 @@ public class WorldInput extends InputAdapter {
                     }
                 }
             }
+        }
+        else if (button == Buttons.RIGHT) {
+            erasing = false;
         }
 
         return false;

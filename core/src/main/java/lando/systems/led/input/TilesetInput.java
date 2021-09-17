@@ -288,7 +288,7 @@ public class TilesetInput extends InputAdapter {
 
         if (button == Input.Buttons.RIGHT) {
             selected_tiles.clear();
-            return true;
+            return false;
         }
 
         // throw away the touch if it's out of bounds
