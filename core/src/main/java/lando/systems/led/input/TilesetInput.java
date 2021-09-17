@@ -286,6 +286,11 @@ public class TilesetInput extends InputAdapter {
         touch_world.set(touch_screen);
         camera.unproject(touch_world);
 
+        if (button == Input.Buttons.RIGHT) {
+            selected_tiles.clear();
+            return true;
+        }
+
         // throw away the touch if it's out of bounds
         if (!rect.contains(touch_world.x, touch_world.y)) {
             return false;
