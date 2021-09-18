@@ -78,6 +78,10 @@ public class RectI implements Pool.Poolable {
              && y >= this.y && y <= this.y + this.h);
     }
 
+    public boolean contains(Point point) {
+        return contains(point.x, point.y);
+    }
+
     public boolean contains(float x, float y) {
         return contains((int) x, (int) y);
     }

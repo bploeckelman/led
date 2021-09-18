@@ -106,57 +106,21 @@ public class WorldInput extends InputAdapter {
                 }
             }
 
-            // check for tile layer touch
-            if (painting && mouse_buttons.left_mouse_down) {
-                var selected_tiles = Inputs.tileset_input.selected_tiles;
-                var tiles_layer = active_level.get_layer(Layer.Tiles.class);
-                if (tiles_layer != null && !selected_tiles.isEmpty()) {
-                    var tile_data = (Layer.TileData) tiles_layer.data;
-                    var grid_attrib = tiles_layer.get_attribute(Layer.GridAttrib.class);
-                    if (tile_data.visible && grid_attrib != null) {
-                        var grid_size = grid_attrib.size;
-                        var tile_rect = RectI.pool.obtain();
-                        {
-                            for (var tile : tile_data.tiles) {
-                                tile_rect.set(
-                                        active_level.pixel_bounds.x + tile.grid.x * grid_size,
-                                        active_level.pixel_bounds.y + tile.grid.y * grid_size,
-                                        grid_size, grid_size);
-                                if (tile_rect.contains(Inputs.mouse_world)) {
-                                    splat_tiles_at(tile, tile_data, selected_tiles);
-                                    break;
-                                }
-                            }
-                        }
-                        RectI.pool.free(tile_rect);
-                    }
+            // check for painting
+            var selected_tiles = Inputs.tileset_input.selected_tiles;
+            if (painting && mouse_buttons.left_mouse_down && !selected_tiles.isEmpty()) {
+                var tile = active_level.point_in_tile(Inputs.mouse_world);
+                if (tile != null) {
+                    var tile_data = (Layer.TileData) active_level.get_layer(Layer.Tiles.class).data;
+                    splat_tiles_at(tile, tile_data, selected_tiles);
                 }
             }
 
-            // TODO: this is a lot of boilerplate just to see if the current mouse position is on a tile in the current level
-            //       add method: Tile Level.touched_tile(Point world_pos)
-            if (erasing && mouse_buttons.right_mouse_down && Inputs.tileset_input.selected_tiles.isEmpty()) {
-                var tiles_layer = active_level.get_layer(Layer.Tiles.class);
-                if (tiles_layer != null) {
-                    var tile_data = (Layer.TileData) tiles_layer.data;
-                    var grid_attrib = tiles_layer.get_attribute(Layer.GridAttrib.class);
-                    if (tile_data.visible && grid_attrib != null) {
-                        var grid_size = grid_attrib.size;
-                        var tile_rect = RectI.pool.obtain();
-                        {
-                            for (var tile : tile_data.tiles) {
-                                tile_rect.set(
-                                        active_level.pixel_bounds.x + tile.grid.x * grid_size,
-                                        active_level.pixel_bounds.y + tile.grid.y * grid_size,
-                                        grid_size, grid_size);
-                                if (tile_rect.contains(Inputs.mouse_world)) {
-                                    tile.tileset_index = -1;
-                                    break;
-                                }
-                            }
-                        }
-                        RectI.pool.free(tile_rect);
-                    }
+            // check for erasing
+            if (erasing && mouse_buttons.right_mouse_down && selected_tiles.isEmpty()) {
+                var tile = active_level.point_in_tile(Inputs.mouse_world);
+                if (tile != null) {
+                    tile.tileset_index = -1;
                 }
             }
         }

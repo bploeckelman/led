@@ -208,6 +208,42 @@ public class Level {
         return null;
     }
 
+    public Tile point_in_tile(Vector3 world_pos) {
+        return point_in_tile((int) world_pos.x, (int) world_pos.y);
+    }
+
+    public Tile point_in_tile(Point world_pos) {
+        return point_in_tile(world_pos.x, world_pos.y);
+    }
+
+    public Tile point_in_tile(int world_pos_x, int world_pos_y) {
+        var tiles_layer = get_layer(Layer.Tiles.class);
+        if (tiles_layer == null) {
+            return null;
+        }
+
+        var tile_data = (Layer.TileData) tiles_layer.data;
+        var grid_attr = tiles_layer.get_attribute(Layer.GridAttrib.class);
+        if (tile_data == null || grid_attr == null || !tile_data.visible) {
+            return null;
+        }
+
+        var tile_rect = RectI.pool.obtain();
+        for (var tile : tile_data.tiles) {
+            tile_rect.set(
+                    pixel_bounds.x + tile.grid.x * grid_attr.size,
+                    pixel_bounds.y + tile.grid.y * grid_attr.size,
+                    grid_attr.size, grid_attr.size);
+            if (tile_rect.contains(world_pos_x, world_pos_y)) {
+                RectI.pool.free(tile_rect);
+                return tile;
+            }
+        }
+        RectI.pool.free(tile_rect);
+
+        return null;
+    }
+
     public class DragHandle {
         public enum Dir { left, right, up, down, center }
 
