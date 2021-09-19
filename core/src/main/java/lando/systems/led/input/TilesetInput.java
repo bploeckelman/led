@@ -287,8 +287,9 @@ public class TilesetInput extends InputAdapter {
         camera.unproject(touch_world);
 
         if (button == Input.Buttons.RIGHT) {
+            boolean had_selection = !selected_tiles.isEmpty();
             selected_tiles.clear();
-            return false;
+            return had_selection;
         }
 
         // throw away the touch if it's out of bounds

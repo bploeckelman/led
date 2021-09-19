@@ -94,8 +94,11 @@ public abstract class Layer {
                 clip_bounds.set(level.pixel_bounds.x, level.pixel_bounds.y, level.pixel_bounds.w, level.pixel_bounds.h);
                 ScissorStack.calculateScissors(Inputs.camera_input.get_camera(), batch.getTransformMatrix(), clip_bounds, scissors);
                 if (ScissorStack.pushScissors(scissors)) {
-                    for (var tile : tile_data.tiles) {
-                        tile.render(drawer, batch, level, grid_attrib, tileset_attrib);
+                    for (int y = 0; y < tile_data.rows; y++) {
+                        for (int x = 0; x < tile_data.cols; x++) {
+                            var tile = tile_data.tiles[y][x];
+                            tile.render(drawer, batch, level, grid_attrib, tileset_attrib);
+                        }
                     }
                     batch.flush();
                     ScissorStack.popScissors();
@@ -131,16 +134,16 @@ public abstract class Layer {
         public boolean visible;
         public final int cols;
         public final int rows;
-        public final Array<Tile> tiles;
+        public Tile[][] tiles;
         public TileData(RectI pixel_bounds, GridAttrib grid) {
             this.visible = true;
             this.cols = MathUtils.ceil((float) pixel_bounds.w / grid.size);
             this.rows = MathUtils.ceil((float) pixel_bounds.h / grid.size);
-            this.tiles = new Array<>(cols * rows);
-            for (int i = 0; i < cols * rows; i++) {
-                var x = i / rows;
-                var y = i % rows;
-                tiles.add(new Tile(x, y));
+            this.tiles = new Tile[rows][cols];
+            for (int y = 0; y < rows; y++) {
+                for (int x = 0; x < cols; x++) {
+                    tiles[y][x] = new Tile(x, y);
+                }
             }
         }
     }

@@ -8,13 +8,11 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.IntArray;
 import com.github.xpenatan.imgui.ImGui;
 import com.github.xpenatan.imgui.ImGuiString;
 import lando.systems.led.Assets;
 import lando.systems.led.utils.Point;
-import lando.systems.led.utils.RectI;
 import lando.systems.led.world.Layer;
 import lando.systems.led.world.Level;
 import lando.systems.led.world.Tile;
@@ -177,33 +175,15 @@ public class WorldInput extends InputAdapter {
 
         if (button == Buttons.RIGHT) {
             // TODO: how to determine if we want a new level or we want to erase?
+
             var active_level = world.get_active_level();
             if (active_level != null) {
                 // check for tile layer touch to draw tiles
-                //   also done in update() to handle drag painting,
-                //   could tighten it up a bit, but the flag is set here
-                {
-                    var tiles_layer = active_level.get_layer(Layer.Tiles.class);
-                    if (tiles_layer != null && Inputs.tileset_input.selected_tiles.isEmpty()) {
-                        var tile_data = (Layer.TileData) tiles_layer.data;
-                        var grid_attrib = tiles_layer.get_attribute(Layer.GridAttrib.class);
-                        if (tile_data.visible && grid_attrib != null) {
-                            var grid_size = grid_attrib.size;
-                            var tile_rect = RectI.pool.obtain();
-                            for (var tile : tile_data.tiles) {
-                                tile_rect.set(
-                                        active_level.pixel_bounds.x + tile.grid.x * grid_size,
-                                        active_level.pixel_bounds.y + tile.grid.y * grid_size,
-                                        grid_size, grid_size);
-                                if (tile_rect.contains(touch_world)) {
-                                    erasing = true;
-                                    RectI.pool.free(tile_rect);
-                                    return true;
-                                }
-                            }
-                            RectI.pool.free(tile_rect);
-                        }
-                    }
+                //   also done in update() to handle drag painting, but the flag is set here
+                var tile = active_level.point_in_tile(touch_world);
+                if (tile != null) {
+                    erasing = true;
+                    return true;
                 }
             }
 
@@ -229,30 +209,11 @@ public class WorldInput extends InputAdapter {
                 var active_level = world.get_active_level();
                 if (active_level != null) {
                     // check for tile layer touch to draw tiles
-                    //   also done in update() to handle drag painting,
-                    //   could tighten it up a bit, but the flag is set here
-                    {
-                        var tiles_layer = active_level.get_layer(Layer.Tiles.class);
-                        if (tiles_layer != null && !Inputs.tileset_input.selected_tiles.isEmpty()) {
-                            var tile_data = (Layer.TileData) tiles_layer.data;
-                            var grid_attrib = tiles_layer.get_attribute(Layer.GridAttrib.class);
-                            if (tile_data.visible && grid_attrib != null) {
-                                var grid_size = grid_attrib.size;
-                                var tile_rect = RectI.pool.obtain();
-                                for (var tile : tile_data.tiles) {
-                                    tile_rect.set(
-                                            active_level.pixel_bounds.x + tile.grid.x * grid_size,
-                                            active_level.pixel_bounds.y + tile.grid.y * grid_size,
-                                            grid_size, grid_size);
-                                    if (tile_rect.contains(touch_world)) {
-                                        painting = true;
-                                        RectI.pool.free(tile_rect);
-                                        return true;
-                                    }
-                                }
-                                RectI.pool.free(tile_rect);
-                            }
-                        }
+                    //   also done in update() to handle drag painting but the flag is set here
+                    var tile = active_level.point_in_tile(touch_world);
+                    if (tile != null) {
+                        painting = true;
+                        return true;
                     }
 
                     // check for drag handle touch
@@ -423,10 +384,10 @@ public class WorldInput extends InputAdapter {
 
                 int tile_x = start_tile.grid.x + (tileset_grid.x - first_tileset_selection_grid_x);
                 int tile_y = start_tile.grid.y + (tileset_grid.y - first_tileset_selection_grid_y);
-                var tile_index =  tile_x * tile_data.rows + tile_y;
 
-                if (tile_index >= 0 && tile_index < tile_data.tiles.size) {
-                    var tile = tile_data.tiles.get(tile_index);
+                if (tile_x >= 0 && tile_x < tile_data.cols
+                 && tile_y >= 0 && tile_y < tile_data.rows) {
+                    var tile = tile_data.tiles[tile_y][tile_x];
                     tile.tileset_index = selected_tileset_index;
                 }
             }

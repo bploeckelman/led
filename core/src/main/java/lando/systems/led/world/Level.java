@@ -229,14 +229,17 @@ public class Level {
         }
 
         var tile_rect = RectI.pool.obtain();
-        for (var tile : tile_data.tiles) {
-            tile_rect.set(
-                    pixel_bounds.x + tile.grid.x * grid_attr.size,
-                    pixel_bounds.y + tile.grid.y * grid_attr.size,
-                    grid_attr.size, grid_attr.size);
-            if (tile_rect.contains(world_pos_x, world_pos_y)) {
-                RectI.pool.free(tile_rect);
-                return tile;
+        for (int y = 0; y < tile_data.rows; y++) {
+            for (int x = 0; x < tile_data.cols; x++) {
+                var tile = tile_data.tiles[y][x];
+                tile_rect.set(
+                        pixel_bounds.x + tile.grid.x * grid_attr.size,
+                        pixel_bounds.y + tile.grid.y * grid_attr.size,
+                        grid_attr.size, grid_attr.size);
+                if (tile_rect.contains(world_pos_x, world_pos_y)) {
+                    RectI.pool.free(tile_rect);
+                    return tile;
+                }
             }
         }
         RectI.pool.free(tile_rect);
