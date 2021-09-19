@@ -77,9 +77,25 @@ public abstract class Layer {
         }
 
         public void regenerate() {
+            // create new tile data
             var grid_attrib = get_attribute(GridAttrib.class);
-            data = new TileData(level.pixel_bounds, grid_attrib);
+            TileData new_data = new TileData(level.pixel_bounds, grid_attrib);
             clip_bounds.set(level.pixel_bounds.x, level.pixel_bounds.y, level.pixel_bounds.w, level.pixel_bounds.h);
+
+            // copy over existing tile data, if there is any
+            if (data != null) {
+                var old_data = (TileData) data;
+                for (int y = 0; y < new_data.rows; y++) {
+                    for (int x = 0; x < new_data.cols; x++) {
+                        if (x < old_data.cols && y < old_data.rows) {
+                            new_data.tiles[y][x].tileset_index = old_data.tiles[y][x].tileset_index;
+                        }
+                    }
+                }
+            }
+
+            // replace existing tile data with new
+            data = new_data;
         }
 
         @Override
